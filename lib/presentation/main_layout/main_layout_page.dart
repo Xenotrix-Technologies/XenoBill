@@ -5,21 +5,33 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/route_constants.dart';
 import '../../application/business/business_bloc.dart';
 import '../../domain/entities/business.dart';
-import '../../domain/entities/business_type.dart';
 import '../navigation/xenobiz_bottom_navigation_bar.dart';
 
 class MainLayoutPage extends StatelessWidget {
   final Widget child;
+  final GoRouterState? state;
 
-  const MainLayoutPage({super.key, required this.child});
+  const MainLayoutPage({
+    super.key,
+    required this.child,
+    this.state,
+  });
 
   int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
+    final String location = state?.matchedLocation ?? state?.uri.path ?? _getSafePath(context);
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/sales')) return 1;
-    if (location.startsWith('/shop') || location.startsWith('/inventory') || location.startsWith('/customers')) return 3;
-    if (location.startsWith('/settings')) return 4;
+    if (location.startsWith('/shop') || location.startsWith('/inventory')) return 3;
+    if (location.startsWith('/settings') || location.startsWith('/customers')) return 4;
     return 0;
+  }
+
+  String _getSafePath(BuildContext context) {
+    try {
+      return GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    } catch (_) {
+      return '/home';
+    }
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -54,8 +66,8 @@ class MainLayoutPage extends StatelessWidget {
           business = bizState.business;
         }
 
-        final shopLabel = business?.terminology.shopSectionTitle ?? 'Shop';
-        final shopIcon = business?.type.icon ?? Icons.inventory_2_outlined;
+        final inventoryLabel = business?.terminology.inventory ?? 'Inventory';
+        const inventoryIcon = Icons.inventory_2_outlined;
 
         if (isDesktop) {
           return Scaffold(
@@ -111,8 +123,8 @@ class MainLayoutPage extends StatelessWidget {
                       const SizedBox(height: 32),
                       _buildNavTile(Icons.dashboard_outlined, Icons.dashboard, 'Home', selectedIndex == 0, () => _onItemTapped(0, context)),
                       _buildNavTile(Icons.receipt_outlined, Icons.receipt, 'Sales', selectedIndex == 1, () => _onItemTapped(1, context)),
-                      _buildNavTile(shopIcon, shopIcon, shopLabel, selectedIndex == 3, () => _onItemTapped(3, context)),
-                      _buildNavTile(Icons.settings_outlined, Icons.settings, 'Settings', selectedIndex == 4, () => _onItemTapped(4, context)),
+                      _buildNavTile(inventoryIcon, inventoryIcon, inventoryLabel, selectedIndex == 3, () => _onItemTapped(3, context)),
+                      _buildNavTile(Icons.more_horiz_rounded, Icons.more_horiz_rounded, 'More', selectedIndex == 4, () => _onItemTapped(4, context)),
                     ],
                   ),
                 ),
@@ -129,9 +141,9 @@ class MainLayoutPage extends StatelessWidget {
           bottomNavigationBar: XenobizBottomNavigationBar(
             selectedIndex: selectedIndex,
             onItemTapped: (index) => _onItemTapped(index, context),
-            shopLabel: shopLabel,
-            shopIcon: shopIcon,
-            shopSelectedIcon: shopIcon,
+            inventoryLabel: inventoryLabel,
+            inventoryIcon: inventoryIcon,
+            inventorySelectedIcon: Icons.inventory_2,
           ),
         );
       },

@@ -20,8 +20,8 @@ void main() {
 
       expect(find.text('Home'), findsOneWidget);
       expect(find.text('Sales'), findsOneWidget);
-      expect(find.text('Shop'), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Inventory'), findsOneWidget);
+      expect(find.text('More'), findsOneWidget);
       expect(find.byType(FloatingAddInvoiceButton), findsOneWidget);
       expect(find.byIcon(Icons.add), findsOneWidget);
     });
@@ -52,13 +52,13 @@ void main() {
       await tester.pump();
       expect(tappedIndex, equals(2));
 
-      // Tap Shop (index 3)
-      await tester.tap(find.text('Shop'));
+      // Tap Inventory (index 3)
+      await tester.tap(find.text('Inventory'));
       await tester.pump();
       expect(tappedIndex, equals(3));
 
-      // Tap Settings (index 4)
-      await tester.tap(find.text('Settings'));
+      // Tap More (index 4)
+      await tester.tap(find.text('More'));
       await tester.pump();
       expect(tappedIndex, equals(4));
 

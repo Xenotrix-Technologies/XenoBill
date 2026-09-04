@@ -1,6 +1,7 @@
 import '../entities/business.dart';
 import '../entities/item.dart';
 import '../entities/customer.dart';
+import '../entities/customer_payment.dart';
 import '../entities/invoice.dart';
 
 abstract class BusinessRepository {
@@ -23,6 +24,9 @@ abstract class CustomerRepository {
   Future<void> addCustomer(Customer customer);
   Future<void> updateCustomer(Customer customer);
   Future<void> recordPayment(String customerId, double amount);
+  Future<void> recordCustomerPayment(CustomerPayment payment);
+  Future<List<CustomerPayment>> getCustomerPayments(String customerId);
+  Future<void> deleteCustomer(String id);
 }
 
 abstract class InvoiceRepository {

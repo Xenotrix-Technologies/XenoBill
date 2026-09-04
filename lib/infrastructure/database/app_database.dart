@@ -5,6 +5,7 @@ import '../../domain/entities/business_type.dart';
 import '../../domain/entities/business_features.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/entities/customer.dart';
+import '../../domain/entities/customer_payment.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/entities/expense.dart';
 import '../../domain/entities/smart_insight.dart';
@@ -21,6 +22,7 @@ class AppDatabase {
   Business? currentBusiness;
   List<Item> items = [];
   List<Customer> customers = [];
+  List<CustomerPayment> customerPayments = [];
   List<Invoice> invoices = [];
   List<Expense> expenses = [];
   List<SmartInsight> smartInsights = [];
@@ -41,6 +43,7 @@ class AppDatabase {
       currentBusiness = null;
       items = [];
       customers = [];
+      customerPayments = [];
       invoices = [];
       expenses = [];
       smartInsights = [];
@@ -51,6 +54,8 @@ class AppDatabase {
 
   void loadDemoData() {
     isDemoMode = true;
+    isLoggedIn = true;
+    isBusinessConfigured = true;
     currentBusiness = Business(
       id: 'biz_demo_1',
       name: 'Demo Store & Services',
@@ -62,12 +67,210 @@ class AppDatabase {
       gstin: '27AABCU9603R1ZM',
       currency: '₹',
       invoicePrefix: 'INV',
-      nextInvoiceNumber: 1001,
+      nextInvoiceNumber: 1027,
       features: BusinessType.retail.defaultFeatures,
     );
-    items = [];
-    customers = [];
-    invoices = [];
+    items = [
+      const Item(
+        id: 'p1',
+        businessId: 'biz_demo_1',
+        type: ItemType.product,
+        name: 'Basmati Rice 5kg',
+        sku: 'RICE005',
+        barcode: '8901030826404',
+        category: 'Groceries',
+        unit: 'Bag',
+        sellingPrice: 320.0,
+        purchasePrice: 280.0,
+        mrp: 340.0,
+        gstRate: 5.0,
+        currentStock: 24,
+        lowStockLimit: 10,
+      ),
+      const Item(
+        id: 'p2',
+        businessId: 'biz_demo_1',
+        type: ItemType.product,
+        name: 'Fortune Sunflower Oil 1L',
+        sku: 'OIL001',
+        barcode: '8901234567890',
+        category: 'Groceries',
+        unit: 'Bottle',
+        sellingPrice: 165.0,
+        purchasePrice: 140.0,
+        mrp: 180.0,
+        gstRate: 5.0,
+        currentStock: 15,
+        lowStockLimit: 5,
+      ),
+      const Item(
+        id: 's1',
+        businessId: 'biz_demo_1',
+        type: ItemType.service,
+        name: 'Home Delivery Service',
+        sku: 'SERV01',
+        category: 'Services',
+        unit: 'Service',
+        sellingPrice: 50.0,
+        purchasePrice: 0.0,
+        gstRate: 18.0,
+        durationMinutes: 30,
+      ),
+    ];
+    customers = [
+      const Customer(
+        id: 'c1',
+        businessId: 'biz_demo_1',
+        name: 'Hari',
+        phone: '+91 40259294662',
+        email: 'hari@example.com',
+        address: 'Flat 102, Lake View Apartments',
+        gstin: '',
+        outstandingBalance: 2500.0,
+        totalInvoices: 12,
+      ),
+    ];
+    invoices = [
+      Invoice(
+        id: 'inv_1026',
+        businessId: 'biz_demo_1',
+        invoiceNumber: 'INV-1026',
+        invoiceDate: DateTime.now().subtract(const Duration(hours: 2)),
+        customerId: 'c1',
+        customerName: 'Hari',
+        customerPhone: '+91 40259294662',
+        items: const [
+          InvoiceItem(
+            id: 'item_1',
+            productId: 'p1',
+            productName: 'Basmati Rice 5kg',
+            quantity: 3,
+            unitPrice: 320.0,
+            discountAmount: 0.0,
+            gstRate: 5.0,
+            taxAmount: 48.0,
+            totalAmount: 1008.0,
+          ),
+          InvoiceItem(
+            id: 'item_2',
+            productId: 's1',
+            productName: 'Home Delivery Service',
+            quantity: 1,
+            unitPrice: 50.0,
+            discountAmount: 0.0,
+            gstRate: 18.0,
+            taxAmount: 9.0,
+            totalAmount: 59.0,
+          ),
+        ],
+        subtotal: 1010.0,
+        discount: 0.0,
+        cgst: 28.5,
+        sgst: 28.5,
+        igst: 0.0,
+        grandTotal: 1134.0,
+        paymentType: PaymentType.credit,
+        paidAmount: 500.0,
+        dueAmount: 634.0,
+        status: InvoiceStatus.partial,
+      ),
+      Invoice(
+        id: 'inv_1021',
+        businessId: 'biz_demo_1',
+        invoiceNumber: 'INV-1021',
+        invoiceDate: DateTime.now().subtract(const Duration(days: 4)),
+        customerId: 'c1',
+        customerName: 'Hari',
+        customerPhone: '+91 40259294662',
+        items: const [
+          InvoiceItem(
+            id: 'item_3',
+            productId: 'p2',
+            productName: 'Fortune Sunflower Oil 1L',
+            quantity: 5,
+            unitPrice: 165.0,
+            discountAmount: 25.0,
+            gstRate: 5.0,
+            taxAmount: 40.0,
+            totalAmount: 840.0,
+          ),
+        ],
+        subtotal: 800.0,
+        discount: 0.0,
+        cgst: 25.0,
+        sgst: 25.0,
+        igst: 0.0,
+        grandTotal: 850.0,
+        paymentType: PaymentType.credit,
+        paidAmount: 850.0,
+        dueAmount: 0.0,
+        status: InvoiceStatus.paid,
+      ),
+      Invoice(
+        id: 'inv_1010',
+        businessId: 'biz_demo_1',
+        invoiceNumber: 'INV-1010',
+        invoiceDate: DateTime(2026, 1, 12, 10, 0),
+        customerId: 'c1',
+        customerName: 'Hari',
+        customerPhone: '+91 40259294662',
+        items: const [
+          InvoiceItem(
+            id: 'item_4',
+            productId: 'p1',
+            productName: 'Basmati Rice 5kg',
+            quantity: 20,
+            unitPrice: 320.0,
+            discountAmount: 0.0,
+            gstRate: 5.0,
+            taxAmount: 320.0,
+            totalAmount: 6516.0,
+          ),
+        ],
+        subtotal: 6200.0,
+        discount: 0.0,
+        cgst: 158.0,
+        sgst: 158.0,
+        igst: 0.0,
+        grandTotal: 6516.0,
+        paymentType: PaymentType.credit,
+        paidAmount: 4650.0,
+        dueAmount: 1866.0,
+        status: InvoiceStatus.partial,
+      ),
+    ];
+    customerPayments = [
+      CustomerPayment(
+        id: 'pay_1',
+        customerId: 'c1',
+        customerName: 'Hari',
+        amount: 500.0,
+        paymentMethod: 'Cash',
+        paymentDate: DateTime.now().subtract(const Duration(days: 2)),
+        referenceNote: 'Cash received on partial bill',
+        allocatedInvoiceId: 'inv_1026',
+      ),
+      CustomerPayment(
+        id: 'pay_2',
+        customerId: 'c1',
+        customerName: 'Hari',
+        amount: 850.0,
+        paymentMethod: 'UPI',
+        paymentDate: DateTime.now().subtract(const Duration(days: 7)),
+        referenceNote: 'UPI12345',
+        allocatedInvoiceId: 'inv_1021',
+      ),
+      CustomerPayment(
+        id: 'pay_3',
+        customerId: 'c1',
+        customerName: 'Hari',
+        amount: 4650.0,
+        paymentMethod: 'Bank Transfer',
+        paymentDate: DateTime(2026, 8, 15, 14, 0),
+        referenceNote: 'NEFT transfer',
+        allocatedInvoiceId: 'inv_1010',
+      ),
+    ];
     expenses = [];
     smartInsights = [];
   }

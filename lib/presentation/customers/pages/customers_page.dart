@@ -13,6 +13,8 @@ import '../../../application/customers/customers_bloc.dart';
 import '../../../application/business/business_bloc.dart';
 import '../../../domain/entities/business.dart';
 import '../../../domain/entities/customer.dart';
+import '../../../domain/entities/business_configuration.dart';
+import '../../../domain/entities/business_type.dart';
 
 class CustomersPage extends StatefulWidget {
   const CustomersPage({super.key});
@@ -39,49 +41,90 @@ class _CustomersPageState extends State<CustomersPage> {
           business = bizState.business;
         }
 
-        final terminology = business?.terminology;
-        final customerLabel = terminology?.customer ?? 'Customer';
-        final customersLabel = terminology?.customers ?? 'Customers';
+        final config = business?.configuration ??
+            BusinessConfiguration.fromType(
+                business?.type ?? BusinessType.retail);
+        final terminology = config.terminology;
+
+        final customerLabel = terminology.customer;
+        final customersLabel = terminology.customers;
 
         return Scaffold(
-          backgroundColor: AppColors.lightGray,
+          backgroundColor: const Color(0xFFF8F9FA),
           appBar: AppBar(
-            title: Text('$customersLabel Directory'),
+            backgroundColor: const Color(0xFFF8F9FA),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF111418)),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  context.go(RouteConstants.settings);
+                }
+              },
+            ),
+            title: Text(
+              customersLabel,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111418),
+              ),
+            ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.inventory_2_outlined),
-                onPressed: () => context.go(RouteConstants.shop),
-                tooltip: 'View Catalog',
+              Padding(
+                padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextButton.icon(
+                    onPressed: () =>
+                        context.push(RouteConstants.addEditCustomer),
+                    icon: const Icon(Icons.add,
+                        size: 18, color: Color(0xFF111418)),
+                    label: Text(
+                      'Add $customerLabel',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111418),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
-          ),
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.only(bottom: 70),
-            child: FloatingActionButton.extended(
-              backgroundColor: AppColors.brightCyan,
-              foregroundColor: AppColors.deepNavy,
-              onPressed: () => context.push(RouteConstants.addEditCustomer),
-              icon: const Icon(Icons.person_add, color: AppColors.deepNavy),
-              label: Text('Add $customerLabel', style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
           ),
           body: SafeArea(
             child: Column(
               children: [
-                // Segmented Switch Container
-                _buildShopSegmentedSwitch(context, customersLabel),
+                const SizedBox(height: 8),
 
                 // Customer Summary Banner
                 _buildCustomerStats(context, customersLabel),
 
                 // Search Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: AppSearchField(
                     controller: _searchController,
-                    hint: 'Search ${customerLabel.toLowerCase()} name or phone...',
+                    hint:
+                        'Search ${customerLabel.toLowerCase()} name or phone...',
                     onChanged: (q) {
-                      context.read<CustomersBloc>().add(SearchCustomersEvent(q));
+                      context
+                          .read<CustomersBloc>()
+                          .add(SearchCustomersEvent(q));
                     },
                   ),
                 ),
@@ -92,40 +135,37 @@ class _CustomersPageState extends State<CustomersPage> {
                     builder: (context, state) {
                       if (state is CustomersLoaded) {
                         final customers = state.filteredCustomers;
+
                         if (customers.isEmpty) {
                           return Center(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(24),
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.people_outline,
-                                      size: 48,
-                                      color: AppColors.brightCyan,
-                                    ),
-                                  ),
+                                  Icon(Icons.people_outline,
+                                      size: 64,
+                                      color: AppColors.brightCyan
+                                          .withValues(alpha: 0.5)),
                                   const SizedBox(height: 16),
                                   Text(
-                                    'No ${customersLabel.toLowerCase()} yet',
-                                    style: AppTextStyles.h2,
+                                    state.searchQuery.isNotEmpty
+                                        ? 'No ${customersLabel.toLowerCase()} found'
+                                        : 'No $customersLabel Yet',
+                                    style: AppTextStyles.h3,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     '$customersLabel you add will appear here.',
-                                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                        color: AppColors.textSecondary),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 24),
                                   AppButton(
                                     text: '+ Add $customerLabel',
-                                    onPressed: () => context.push(RouteConstants.addEditCustomer),
+                                    onPressed: () => context
+                                        .push(RouteConstants.addEditCustomer),
                                   ),
                                 ],
                               ),
@@ -134,7 +174,8 @@ class _CustomersPageState extends State<CustomersPage> {
                         }
 
                         return ListView.builder(
-                          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 120),
+                          padding: const EdgeInsets.only(
+                              left: 16, right: 16, bottom: 100),
                           itemCount: customers.length,
                           itemBuilder: (context, index) {
                             final customer = customers[index];
@@ -154,51 +195,6 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  Widget _buildShopSegmentedSwitch(BuildContext context, String customersLabel) {
-    return Container(
-      color: AppColors.deepNavy,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => context.go(RouteConstants.shop),
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.darkNavy,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Text(
-                    'CATALOG',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.brightCyan,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Center(
-                child: Text(
-                  customersLabel.toUpperCase(),
-                  style: const TextStyle(color: AppColors.deepNavy, fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCustomerStats(BuildContext context, String customersLabel) {
     return BlocBuilder<CustomersBloc, CustomersState>(
       builder: (context, state) {
@@ -211,27 +207,52 @@ class _CustomersPageState extends State<CustomersPage> {
         }
 
         return Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          color: AppColors.darkNavy,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Column(
                 children: [
-                  Text('Total $customersLabel', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                  Text('Total $customersLabel',
+                      style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
-                  Text('$total', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('$total',
+                      style: const TextStyle(
+                          color: Color(0xFF111418),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
-              Container(height: 24, width: 1, color: Colors.white24),
+              Container(height: 24, width: 1, color: Colors.grey.shade300),
               Column(
                 children: [
-                  const Text('Total Credit Outstanding', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  const Text('Total Credit Outstanding',
+                      style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
                   Text(
                     CurrencyFormatter.format(outstanding),
                     style: TextStyle(
-                      color: outstanding > 0 ? AppColors.error : AppColors.brightCyan,
+                      color: outstanding > 0
+                          ? AppColors.error
+                          : AppColors.deepNavy,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -251,11 +272,12 @@ class _CustomersPageState extends State<CustomersPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: AppCard(
-        onTap: () => _showCustomerDetailModal(context, customer),
+        onTap: () => context.push(RouteConstants.customerProfile, extra: customer),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: hasDue ? Colors.amber.shade100 : AppColors.darkNavy,
+              backgroundColor:
+                  hasDue ? Colors.amber.shade100 : AppColors.darkNavy,
               child: Icon(
                 Icons.person,
                 color: hasDue ? Colors.amber.shade900 : Colors.white,
@@ -266,27 +288,55 @@ class _CustomersPageState extends State<CustomersPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(customer.name, style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
-                  Text('${customer.phone.isEmpty ? "Walk-in" : customer.phone} • ${customer.totalInvoices} Invoices', style: AppTextStyles.bodySmall),
+                  Text(customer.name,
+                      style: AppTextStyles.bodyLarge
+                          .copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                      '${customer.phone.isEmpty ? "Walk-in" : customer.phone} • ${customer.totalInvoices} Invoices',
+                      style: AppTextStyles.bodySmall),
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (hasDue) ...[
-                  Text(
-                    CurrencyFormatter.format(customer.outstandingBalance),
-                    style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold, color: AppColors.error),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(4)),
-                    child: Text('CREDIT DUE', style: TextStyle(fontSize: 9, color: Colors.red.shade900, fontWeight: FontWeight.bold)),
-                  ),
-                ] else ...[
-                  const Text('₹0 Due', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13)),
-                ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (hasDue) ...[
+                      Text(
+                        CurrencyFormatter.format(customer.outstandingBalance),
+                        style: AppTextStyles.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.error),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(4)),
+                        child: Text('CREDIT DUE',
+                            style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.red.shade900,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ] else ...[
+                      const Text('₹0 Due',
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                    ],
+                  ],
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.more_vert,
+                      color: Color(0xFF64748B), size: 20),
+                  onPressed: () => _showCustomerOptionsModal(context, customer),
+                ),
               ],
             ),
           ],
@@ -295,77 +345,218 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
-  void _showCustomerDetailModal(BuildContext context, Customer customer) {
-    final paymentController = TextEditingController();
-
+  void _showCustomerOptionsModal(BuildContext context, Customer customer) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 16, left: 16, right: 16, top: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(customer.name, style: AppTextStyles.h2),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              Text('Phone: ${customer.phone.isEmpty ? "N/A" : customer.phone}', style: AppTextStyles.bodyMedium),
-              if (customer.address.isNotEmpty) Text('Address: ${customer.address}', style: AppTextStyles.bodySmall),
-              if (customer.gstin.isNotEmpty) Text('GSTIN: ${customer.gstin}', style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold)),
-              const Divider(height: 24),
+        final hasDue = customer.outstandingBalance > 0;
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Outstanding Credit Balance:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(
-                    CurrencyFormatter.format(customer.outstandingBalance),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.error),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Grab Bar
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ],
-              ),
-
-              if (customer.outstandingBalance > 0) ...[
+                ),
                 const SizedBox(height: 16),
-                Text('Record Payment Collected', style: AppTextStyles.h3),
-                const SizedBox(height: 8),
+
+                // Customer Header Preview
                 Row(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: paymentController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Amount Paid (₹)'),
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: hasDue
+                          ? Colors.amber.shade100
+                          : const Color(0xFFF1F5F9),
+                      child: Icon(
+                        Icons.person,
+                        color: hasDue
+                            ? Colors.amber.shade900
+                            : const Color(0xFF334155),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        final amt = double.tryParse(paymentController.text) ?? 0.0;
-                        if (amt > 0) {
-                          context.read<CustomersBloc>().add(RecordCustomerPaymentEvent(customerId: customer.id, amount: amt));
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Recorded ₹$amt payment for ${customer.name}')),
-                          );
-                        }
-                      },
-                      child: const Text('Record Payment'),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            customer.name,
+                            style: AppTextStyles.h3.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${customer.phone.isEmpty ? "No phone" : customer.phone} • ${customer.totalInvoices} Invoices',
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF64748B)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
+                    if (hasDue)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          CurrencyFormatter.format(customer.outstandingBalance),
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade900),
+                        ),
+                      ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
+
+                // Option 1: View Details & Ledger
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0F7FA),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.visibility_outlined,
+                        color: Color(0xFF00ACC1), size: 22),
+                  ),
+                  title: const Text(
+                    'View Details & Record Payment',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF0F172A)),
+                  ),
+                  subtitle: const Text(
+                      'View credit balance, contact info & ledger',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.push(RouteConstants.customerProfile, extra: customer);
+                  },
+                ),
+
+                // Option 2: Edit Customer
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.edit_outlined,
+                        color: Color(0xFF334155), size: 22),
+                  ),
+                  title: const Text(
+                    'Edit Customer Profile',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF0F172A)),
+                  ),
+                  subtitle: const Text('Update phone, email, address & GSTIN',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.push(RouteConstants.addEditCustomer,
+                        extra: customer);
+                  },
+                ),
+
+                // Option 3: Delete Customer
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.delete_outline,
+                        color: Color(0xFFE53935), size: 22),
+                  ),
+                  title: const Text(
+                    'Delete Customer',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFFE53935)),
+                  ),
+                  subtitle: const Text('Remove party record from business',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _confirmDeleteCustomer(context, customer);
+                  },
+                ),
+
+                const SizedBox(height: 8),
               ],
-            ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  void _confirmDeleteCustomer(BuildContext context, Customer customer) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Customer'),
+        content: Text(
+            'Are you sure you want to delete "${customer.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              context
+                  .read<CustomersBloc>()
+                  .add(DeleteCustomerEvent(customer.id));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${customer.name} deleted')),
+              );
+            },
+            child: const Text('Delete',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }

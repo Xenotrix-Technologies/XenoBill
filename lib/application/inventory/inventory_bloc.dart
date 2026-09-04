@@ -32,6 +32,13 @@ class UpdateProductEvent extends InventoryEvent {
   List<Object?> get props => [item];
 }
 
+class DeleteProductEvent extends InventoryEvent {
+  final String productId;
+  const DeleteProductEvent(this.productId);
+  @override
+  List<Object?> get props => [productId];
+}
+
 class AdjustStockEvent extends InventoryEvent {
   final String productId;
   final int newStock;
@@ -104,6 +111,11 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
 
     on<UpdateProductEvent>((event, emit) async {
       await repository.updateProduct(event.item);
+      add(LoadInventoryEvent());
+    });
+
+    on<DeleteProductEvent>((event, emit) async {
+      await repository.deleteProduct(event.productId);
       add(LoadInventoryEvent());
     });
 

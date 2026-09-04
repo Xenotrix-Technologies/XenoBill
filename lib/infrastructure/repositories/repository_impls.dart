@@ -1,6 +1,8 @@
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/business.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/entities/customer.dart';
+import '../../domain/entities/customer_payment.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/repositories/repositories.dart';
 import '../database/app_database.dart';
@@ -106,10 +108,80 @@ class CustomerRepositoryImpl implements CustomerRepository {
   Future<void> recordPayment(String customerId, double amount) async {
     final index = db.customers.indexWhere((c) => c.id == customerId);
     if (index != -1) {
-      final updatedBal = (db.customers[index].outstandingBalance - amount).clamp(0.0, double.infinity);
-      db.customers[index] = db.customers[index].copyWith(outstandingBalance: updatedBal);
+      final customer = db.customers[index];
+      final updatedBal = (customer.outstandingBalance - amount).clamp(0.0, double.infinity);
+      db.customers[index] = customer.copyWith(outstandingBalance: updatedBal);
+
+      final payment = CustomerPayment(
+        id: const Uuid().v4(),
+        customerId: customer.id,
+        customerName: customer.name,
+        amount: amount,
+        paymentMethod: 'Cash',
+        paymentDate: DateTime.now(),
+        referenceNote: 'Payment collected',
+      );
+      db.customerPayments.insert(0, payment);
       await db.saveLocalState();
     }
+  }
+
+  @override
+  Future<void> recordCustomerPayment(CustomerPayment payment) async {
+    db.customerPayments.insert(0, payment);
+
+    final index = db.customers.indexWhere((c) => c.id == payment.customerId);
+    if (index != -1) {
+      final customer = db.customers[index];
+      final updatedBal = (customer.outstandingBalance - payment.amount).clamp(0.0, double.infinity);
+      db.customers[index] = customer.copyWith(outstandingBalance: updatedBal);
+    }
+
+    // Allocate to specific invoice if provided
+    if (payment.allocatedInvoiceId != null && payment.allocatedInvoiceId!.isNotEmpty) {
+      final invIndex = db.invoices.indexWhere((i) => i.id == payment.allocatedInvoiceId);
+      if (invIndex != -1) {
+        final inv = db.invoices[invIndex];
+        final newPaid = inv.paidAmount + payment.amount;
+        final newDue = (inv.grandTotal - newPaid).clamp(0.0, double.infinity);
+        final newStatus = newDue <= 0 ? InvoiceStatus.paid : InvoiceStatus.partial;
+
+        db.invoices[invIndex] = Invoice(
+          id: inv.id,
+          businessId: inv.businessId,
+          invoiceNumber: inv.invoiceNumber,
+          invoiceDate: inv.invoiceDate,
+          customerId: inv.customerId,
+          customerName: inv.customerName,
+          customerPhone: inv.customerPhone,
+          items: inv.items,
+          subtotal: inv.subtotal,
+          discount: inv.discount,
+          cgst: inv.cgst,
+          sgst: inv.sgst,
+          igst: inv.igst,
+          grandTotal: inv.grandTotal,
+          paymentType: inv.paymentType,
+          paidAmount: newPaid,
+          dueAmount: newDue,
+          status: newStatus,
+        );
+      }
+    }
+
+    await db.saveLocalState();
+  }
+
+  @override
+  Future<List<CustomerPayment>> getCustomerPayments(String customerId) async {
+    return db.customerPayments.where((p) => p.customerId == customerId).toList();
+  }
+
+  @override
+  Future<void> deleteCustomer(String id) async {
+    db.customers.removeWhere((c) => c.id == id);
+    db.customerPayments.removeWhere((p) => p.customerId == id);
+    await db.saveLocalState();
   }
 }
 

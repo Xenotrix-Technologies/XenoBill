@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class FloatingAddInvoiceButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -12,6 +11,7 @@ class FloatingAddInvoiceButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const String tooltipText = 'Add Invoice';
+    const buttonColor = Color(0xFF2563EB); // Royal Vibrant Blue from reference image 2
 
     return Tooltip(
       message: tooltipText,
@@ -23,34 +23,23 @@ class FloatingAddInvoiceButton extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            width: 58,
-            height: 58,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: AppColors.brightCyan,
+              color: buttonColor,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 4.0,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.brightCyan.withValues(alpha: 0.5),
-                  blurRadius: 14,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
+                  color: buttonColor.withAlpha(70),
                   blurRadius: 8,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: const Icon(
               Icons.add,
-              color: AppColors.deepNavy,
-              size: 30,
+              color: Colors.white,
+              size: 26,
             ),
           ),
         ),

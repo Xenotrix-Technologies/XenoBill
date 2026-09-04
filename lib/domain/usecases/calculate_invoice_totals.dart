@@ -6,6 +6,7 @@ class CalculateInvoiceTotals {
     required double overallDiscount,
     required bool gstEnabled,
     required bool isInterState,
+    double extraExpensesTotal = 0.0,
   }) {
     double subtotal = 0.0;
     double totalTax = 0.0;
@@ -30,7 +31,7 @@ class CalculateInvoiceTotals {
     }
 
     final netSubtotal = (subtotal - overallDiscount).clamp(0.0, double.infinity);
-    final grandTotal = netSubtotal + totalTax;
+    final grandTotal = netSubtotal + totalTax + extraExpensesTotal;
 
     return {
       'subtotal': subtotal,
@@ -39,6 +40,7 @@ class CalculateInvoiceTotals {
       'sgst': sgst,
       'igst': igst,
       'totalTax': totalTax,
+      'extraExpenses': extraExpensesTotal,
       'grandTotal': grandTotal,
     };
   }

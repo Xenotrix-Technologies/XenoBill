@@ -14,8 +14,10 @@ class RouteConstants {
   static const String shop = '/shop';
   static const String inventory = '/inventory';
   static const String addEditProduct = '/inventory/edit';
+  static const String productDetail = '/inventory/detail';
   static const String customers = '/customers';
   static const String addEditCustomer = '/customers/edit';
+  static const String customerProfile = '/customers/profile';
   static const String reports = '/reports';
   static const String settings = '/settings';
 }

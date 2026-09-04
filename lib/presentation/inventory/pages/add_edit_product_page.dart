@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_text_field.dart';
 import '../../../application/inventory/inventory_bloc.dart';
+import '../../../application/business/business_bloc.dart';
 import '../../../domain/entities/item.dart';
 
 class AddEditProductPage extends StatefulWidget {
-  const AddEditProductPage({super.key});
+  final Item? initialItem;
+
+  const AddEditProductPage({
+    super.key,
+    this.initialItem,
+  });
 
   @override
   State<AddEditProductPage> createState() => _AddEditProductPageState();
@@ -19,25 +22,228 @@ class AddEditProductPage extends StatefulWidget {
 
 class _AddEditProductPageState extends State<AddEditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  ItemType _selectedType = ItemType.product;
-  final _nameController = TextEditingController();
-  final _skuController = TextEditingController();
-  final _barcodeController = TextEditingController();
-  final _categoryController = TextEditingController(text: 'General');
-  final _unitController = TextEditingController(text: 'Unit');
-  final _purchasePriceController = TextEditingController();
-  final _sellingPriceController = TextEditingController();
-  final _mrpController = TextEditingController();
-  final _gstRateController = TextEditingController(text: '5');
-  final _stockController = TextEditingController(text: '20');
-  final _lowStockController = TextEditingController(text: '5');
+
+  late ItemType _selectedType;
+  late TextEditingController _nameController;
+  late TextEditingController _skuController;
+  late TextEditingController _barcodeController;
+  late String _selectedCategory;
+  late String _selectedUnit;
+  late TextEditingController _purchasePriceController;
+  late TextEditingController _sellingPriceController;
+  late TextEditingController _mrpController;
+  late int _selectedGstRate;
+  late TextEditingController _stockController;
+  late TextEditingController _lowStockController;
+
+  bool get isEditing => widget.initialItem != null;
+
+  final List<String> _categoryOptions = [
+    'Groceries',
+    'Dairy',
+    'Snacks',
+    'Beverages',
+    'Bakery',
+    'Electronics',
+    'Clothing',
+    'Services',
+    'General',
+  ];
+
+  final List<String> _unitOptions = [
+    'Bag',
+    'Pcs',
+    'Kg',
+    'Ltr',
+    'Box',
+    'Pack',
+    'Mtr',
+    'Hours',
+    'Mins',
+    'Job',
+  ];
+
+  final List<int> _gstOptions = [0, 5, 12, 18, 28];
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.initialItem;
+
+    _selectedType = item?.type ?? ItemType.product;
+    _nameController = TextEditingController(text: item?.name ?? '');
+    _skuController = TextEditingController(text: item?.sku ?? '');
+    _barcodeController = TextEditingController(text: item?.barcode ?? '');
+
+    final initialCat = item?.category ?? 'Groceries';
+    _selectedCategory = _categoryOptions.contains(initialCat) ? initialCat : 'Groceries';
+
+    final initialUnit = item?.unit ?? 'Bag';
+    _selectedUnit = _unitOptions.contains(initialUnit) ? initialUnit : 'Bag';
+
+    _purchasePriceController = TextEditingController(
+      text: (item != null && item.purchasePrice > 0) ? item.purchasePrice.toStringAsFixed(0) : '',
+    );
+    _sellingPriceController = TextEditingController(
+      text: (item != null && item.sellingPrice > 0) ? item.sellingPrice.toStringAsFixed(0) : '',
+    );
+    _mrpController = TextEditingController(
+      text: (item != null && item.mrp > 0) ? item.mrp.toStringAsFixed(0) : '',
+    );
+
+    final intGst = item?.gstRate.toInt() ?? 5;
+    _selectedGstRate = _gstOptions.contains(intGst) ? intGst : 5;
+
+    _stockController = TextEditingController(
+      text: item != null ? item.currentStock.toString() : '20',
+    );
+    _lowStockController = TextEditingController(
+      text: item != null ? item.lowStockLimit.toString() : '5',
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _skuController.dispose();
+    _barcodeController.dispose();
+    _purchasePriceController.dispose();
+    _sellingPriceController.dispose();
+    _mrpController.dispose();
+    _stockController.dispose();
+    _lowStockController.dispose();
+    super.dispose();
+  }
+
+  void _saveItem() {
+    if (_formKey.currentState!.validate()) {
+      final businessState = context.read<BusinessBloc>().state;
+      String bizId = 'biz_1';
+      if (businessState is BusinessLoaded) {
+        bizId = businessState.business.id;
+      }
+
+      final newItem = Item(
+        id: widget.initialItem?.id ?? const Uuid().v4(),
+        businessId: bizId,
+        type: _selectedType,
+        name: _nameController.text.trim(),
+        sku: _skuController.text.trim(),
+        barcode: _barcodeController.text.trim(),
+        category: _selectedCategory,
+        unit: _selectedUnit,
+        purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0.0,
+        sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0.0,
+        mrp: double.tryParse(_mrpController.text) ?? 0.0,
+        gstRate: _selectedGstRate.toDouble(),
+        currentStock: _selectedType == ItemType.product ? (int.tryParse(_stockController.text) ?? 0) : 0,
+        lowStockLimit: _selectedType == ItemType.product ? (int.tryParse(_lowStockController.text) ?? 5) : 0,
+      );
+
+      if (isEditing) {
+        context.read<InventoryBloc>().add(UpdateProductEvent(newItem));
+      } else {
+        context.read<InventoryBloc>().add(AddProductEvent(newItem));
+      }
+
+      context.pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditing
+                ? '${newItem.name} updated successfully!'
+                : '${newItem.name} added successfully!',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product?'),
+        content: Text('Are you sure you want to delete "${widget.initialItem?.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (widget.initialItem != null) {
+                context.read<InventoryBloc>().add(DeleteProductEvent(widget.initialItem!.id));
+                context.pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${widget.initialItem!.name} deleted')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(_selectedType == ItemType.product ? 'Add New Product' : 'Add New Service'),
+        backgroundColor: const Color(0xFFF8F9FA),
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: InkWell(
+            onTap: () => context.pop(),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(20),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back, color: Color(0xFF111418), size: 20),
+            ),
+          ),
+        ),
+        title: Text(
+          isEditing
+              ? (_selectedType == ItemType.product ? 'Edit product' : 'Edit service')
+              : (_selectedType == ItemType.product ? 'Add product' : 'Add service'),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF111418),
+          ),
+        ),
+        actions: [
+          if (isEditing)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: _confirmDelete,
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -47,191 +253,326 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Item Type Selector Switch
-                Text('Item Type', style: AppTextStyles.h2),
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    ChoiceChip(
-                      label: const Text('PRODUCT (With Stock)'),
-                      selected: _selectedType == ItemType.product,
-                      selectedColor: AppColors.brightCyan,
-                      onSelected: (_) => setState(() => _selectedType = ItemType.product),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('SERVICE (No Stock)'),
-                      selected: _selectedType == ItemType.service,
-                      selectedColor: AppColors.brightCyan,
-                      onSelected: (_) => setState(() => _selectedType = ItemType.service),
-                    ),
-                  ],
+                // Centered Photo Section
+                Center(
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Icon(
+                              _selectedType == ItemType.product ? Icons.folder_outlined : Icons.build_outlined,
+                              size: 42,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                color: AppColors.brightCyan,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, color: AppColors.deepNavy, size: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Change photo',
+                        style: TextStyle(
+                          color: Color(0xFF5A6275),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
 
-                Text('Basic Information', style: AppTextStyles.h2),
-                const SizedBox(height: AppSpacing.sm),
-                AppTextField(
-                  label: _selectedType == ItemType.product ? 'Product Name' : 'Service Name',
-                  hint: _selectedType == ItemType.product ? 'e.g. Basmati Rice 5kg' : 'e.g. Haircut, AC Service',
-                  controller: _nameController,
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                // SECTION 1: Basic Information
+                const Text(
+                  'Basic information',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111418)),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 12),
+
+                _buildRoundedInputField(
+                  label: _selectedType == ItemType.product ? 'Product name' : 'Service name',
+                  hint: 'e.g. Basmati Rice 5kg',
+                  controller: _nameController,
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Product name is required' : null,
+                ),
+                const SizedBox(height: 14),
+
                 if (_selectedType == ItemType.product) ...[
                   Row(
                     children: [
                       Expanded(
-                        child: AppTextField(
-                          label: 'SKU Code',
-                          hint: 'RICE-005',
+                        child: _buildRoundedInputField(
+                          label: 'SKU',
+                          hint: 'RICE005',
                           controller: _skuController,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: AppTextField(
+                        child: _buildRoundedInputField(
                           label: 'Barcode',
-                          hint: '8901234567',
+                          hint: '8901030826404',
                           controller: _barcodeController,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 14),
                 ],
+
                 Row(
                   children: [
                     Expanded(
-                      child: AppTextField(
+                      child: _buildRoundedDropdownField<String>(
                         label: 'Category',
-                        hint: _selectedType == ItemType.product ? 'Groceries' : 'Salon / Repair',
-                        controller: _categoryController,
+                        value: _selectedCategory,
+                        items: _categoryOptions,
+                        onChanged: (v) {
+                          if (v != null) setState(() => _selectedCategory = v);
+                        },
+                        itemLabelBuilder: (c) => c,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: AppTextField(
+                      child: _buildRoundedDropdownField<String>(
                         label: 'Unit',
-                        hint: _selectedType == ItemType.product ? 'kg, Pack' : 'Service, Job',
-                        controller: _unitController,
+                        value: _selectedUnit,
+                        items: _unitOptions,
+                        onChanged: (v) {
+                          if (v != null) setState(() => _selectedUnit = v);
+                        },
+                        itemLabelBuilder: (u) => u,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 24),
 
-                Text('Pricing & Tax', style: AppTextStyles.h2),
-                const SizedBox(height: AppSpacing.sm),
+                // SECTION 2: Pricing
+                const Text(
+                  'Pricing',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111418)),
+                ),
+                const SizedBox(height: 12),
+
                 Row(
                   children: [
                     Expanded(
-                      child: AppTextField(
-                        label: 'Selling Price (₹)',
-                        hint: '350',
+                      child: _buildRoundedInputField(
+                        label: 'Purchase price',
+                        hint: '280',
+                        prefixText: '₹',
+                        keyboardType: TextInputType.number,
+                        controller: _purchasePriceController,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildRoundedInputField(
+                        label: 'Selling price',
+                        hint: '320',
+                        prefixText: '₹',
                         keyboardType: TextInputType.number,
                         controller: _sellingPriceController,
-                        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: AppTextField(
-                        label: 'GST Rate (%)',
-                        hint: '5, 12, 18',
-                        keyboardType: TextInputType.number,
-                        controller: _gstRateController,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 14),
 
+                _buildRoundedInputField(
+                  label: 'MRP',
+                  hint: '340',
+                  prefixText: '₹',
+                  keyboardType: TextInputType.number,
+                  controller: _mrpController,
+                ),
+                const SizedBox(height: 24),
+
+                // SECTION 3: Tax
+                const Text(
+                  'Tax',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111418)),
+                ),
+                const SizedBox(height: 12),
+
+                _buildRoundedDropdownField<int>(
+                  label: 'GST rate',
+                  value: _selectedGstRate,
+                  items: _gstOptions,
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedGstRate = v);
+                  },
+                  itemLabelBuilder: (rate) => '$rate%',
+                ),
+                const SizedBox(height: 24),
+
+                // SECTION 4: Inventory (If Product)
                 if (_selectedType == ItemType.product) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppTextField(
-                          label: 'Purchase Price (₹)',
-                          hint: '280',
-                          keyboardType: TextInputType.number,
-                          controller: _purchasePriceController,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: AppTextField(
-                          label: 'MRP (₹)',
-                          hint: '380',
-                          keyboardType: TextInputType.number,
-                          controller: _mrpController,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'Inventory',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111418)),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: 12),
 
-                  Text('Inventory & Stock', style: AppTextStyles.h2),
-                  const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
                       Expanded(
-                        child: AppTextField(
-                          label: 'Opening Stock',
-                          hint: '20',
+                        child: _buildRoundedInputField(
+                          label: 'Current stock',
+                          hint: '24',
                           keyboardType: TextInputType.number,
                           controller: _stockController,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: AppTextField(
-                          label: 'Low Stock Limit',
-                          hint: '5',
+                        child: _buildRoundedInputField(
+                          label: 'Low stock alert',
+                          hint: '10',
                           keyboardType: TextInputType.number,
                           controller: _lowStockController,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 32),
                 ],
 
-                const SizedBox(height: AppSpacing.xl),
-                AppButton(
-                  text: _selectedType == ItemType.product ? 'Save Product' : 'Save Service',
+                // Save Action Button
+                SizedBox(
                   width: double.infinity,
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      final newItem = Item(
-                        id: const Uuid().v4(),
-                        businessId: 'biz_1',
-                        type: _selectedType,
-                        name: _nameController.text,
-                        sku: _skuController.text,
-                        barcode: _barcodeController.text,
-                        category: _categoryController.text,
-                        unit: _unitController.text,
-                        purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0.0,
-                        sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0.0,
-                        mrp: double.tryParse(_mrpController.text) ?? 0.0,
-                        gstRate: double.tryParse(_gstRateController.text) ?? 5.0,
-                        currentStock: _selectedType == ItemType.product ? (int.tryParse(_stockController.text) ?? 0) : 0,
-                        lowStockLimit: _selectedType == ItemType.product ? (int.tryParse(_lowStockController.text) ?? 5) : 0,
-                      );
-
-                      context.read<InventoryBloc>().add(AddProductEvent(newItem));
-                      context.pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${_selectedType.name.toUpperCase()} saved successfully!')),
-                      );
-                    }
-                  },
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _saveItem,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.brightCyan,
+                      foregroundColor: AppColors.deepNavy,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                    ),
+                    child: Text(
+                      _selectedType == ItemType.product ? 'Save product' : 'Save service',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.deepNavy),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRoundedInputField({
+    required String label,
+    required TextEditingController controller,
+    String? hint,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+    String? prefixText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF5A6275))),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            validator: validator,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF111418)),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+              prefixText: prefixText,
+              prefixStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111418)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoundedDropdownField<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+    required String Function(T) itemLabelBuilder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF5A6275))),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: items.contains(value) ? value : items.first,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF111418)),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF111418)),
+              onChanged: onChanged,
+              items: items.map((item) {
+                return DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(itemLabelBuilder(item)),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

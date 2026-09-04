@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class NavigationItem extends StatelessWidget {
   final String label;
@@ -21,8 +20,10 @@ class NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = AppColors.brightCyan;
-    final inactiveColor = Colors.white.withValues(alpha: 0.6);
+    const unselectedColor = Color(0xFF64748B);
+    const selectedTextColor = Color(0xFF0F172A);
+    const selectedIconColor = Color(0xFF1E293B);
+    const selectedPillBg = Color(0xFFEEF2FF);
 
     return Semantics(
       label: semanticLabel,
@@ -32,27 +33,36 @@ class NavigationItem extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: 48,
-            minHeight: 48,
-          ),
+        child: SizedBox(
+          height: 52,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isSelected ? selectedIcon : icon,
-                color: isSelected ? activeColor : inactiveColor,
-                size: 24,
+              // Icon Area with small compact pill if selected
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 52,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? selectedPillBg : Colors.transparent,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  isSelected ? selectedIcon : icon,
+                  color: isSelected ? selectedIconColor : unselectedColor,
+                  size: 20,
+                ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
+              // Text Label
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? activeColor : inactiveColor,
+                  color: isSelected ? selectedTextColor : unselectedColor,
                   height: 1.1,
                 ),
               ),

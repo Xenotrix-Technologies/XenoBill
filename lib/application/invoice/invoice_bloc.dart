@@ -29,6 +29,22 @@ class UpdateCartQuantityEvent extends InvoiceEvent {
   List<Object?> get props => [productId, delta];
 }
 
+class UpdateCartItemPriceEvent extends InvoiceEvent {
+  final String productId;
+  final double newPrice;
+  const UpdateCartItemPriceEvent({required this.productId, required this.newPrice});
+  @override
+  List<Object?> get props => [productId, newPrice];
+}
+
+class UpdateCartItemDiscountEvent extends InvoiceEvent {
+  final String productId;
+  final double newDiscount;
+  const UpdateCartItemDiscountEvent({required this.productId, required this.newDiscount});
+  @override
+  List<Object?> get props => [productId, newDiscount];
+}
+
 class SetCustomerEvent extends InvoiceEvent {
   final Customer customer;
   const SetCustomerEvent(this.customer);
@@ -57,14 +73,45 @@ class SetPaidAmountEvent extends InvoiceEvent {
   List<Object?> get props => [amount];
 }
 
+class AddExtraExpenseEvent extends InvoiceEvent {
+  final String name;
+  final double amount;
+  const AddExtraExpenseEvent({required this.name, required this.amount});
+  @override
+  List<Object?> get props => [name, amount];
+}
+
+class RemoveExtraExpenseEvent extends InvoiceEvent {
+  final String expenseId;
+  const RemoveExtraExpenseEvent(this.expenseId);
+  @override
+  List<Object?> get props => [expenseId];
+}
+
 class SaveInvoiceEvent extends InvoiceEvent {}
 
 class ResetCartEvent extends InvoiceEvent {}
+
+class ExtraExpenseItem extends Equatable {
+  final String id;
+  final String name;
+  final double amount;
+
+  const ExtraExpenseItem({
+    required this.id,
+    required this.name,
+    required this.amount,
+  });
+
+  @override
+  List<Object?> get props => [id, name, amount];
+}
 
 class InvoiceState extends Equatable {
   final List<InvoiceItem> items;
   final Customer customer;
   final PaymentType paymentType;
+  final List<ExtraExpenseItem> extraExpenses;
   final double overallDiscount;
   final double customPaidAmount;
   final double subtotal;
@@ -82,6 +129,7 @@ class InvoiceState extends Equatable {
     required this.items,
     required this.customer,
     required this.paymentType,
+    this.extraExpenses = const [],
     this.overallDiscount = 0.0,
     this.customPaidAmount = -1.0,
     this.subtotal = 0.0,
@@ -95,6 +143,9 @@ class InvoiceState extends Equatable {
     this.savedInvoice,
     this.errorMessage,
   });
+
+  double get totalExtraExpenses => extraExpenses.fold(0.0, (sum, e) => sum + e.amount);
+  int get totalItemCount => items.fold(0, (sum, i) => sum + i.quantity);
 
   factory InvoiceState.initial() {
     final walkIn = AppDatabase.instance.customers.firstWhere(
@@ -116,6 +167,7 @@ class InvoiceState extends Equatable {
       items: const [],
       customer: walkIn,
       paymentType: PaymentType.cash,
+      extraExpenses: const [],
     );
   }
 
@@ -123,6 +175,7 @@ class InvoiceState extends Equatable {
     List<InvoiceItem>? items,
     Customer? customer,
     PaymentType? paymentType,
+    List<ExtraExpenseItem>? extraExpenses,
     double? overallDiscount,
     double? customPaidAmount,
     double? subtotal,
@@ -140,6 +193,7 @@ class InvoiceState extends Equatable {
       items: items ?? this.items,
       customer: customer ?? this.customer,
       paymentType: paymentType ?? this.paymentType,
+      extraExpenses: extraExpenses ?? this.extraExpenses,
       overallDiscount: overallDiscount ?? this.overallDiscount,
       customPaidAmount: customPaidAmount ?? this.customPaidAmount,
       subtotal: subtotal ?? this.subtotal,
@@ -160,6 +214,7 @@ class InvoiceState extends Equatable {
         items,
         customer,
         paymentType,
+        extraExpenses,
         overallDiscount,
         customPaidAmount,
         subtotal,
@@ -187,7 +242,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       if (index != -1) {
         final existing = currentItems[index];
         final newQty = existing.quantity + 1;
-        final newLineSubtotal = event.item.sellingPrice * newQty;
+        final newLineSubtotal = existing.unitPrice * newQty - existing.discountAmount;
         final newTax = (newLineSubtotal * event.item.gstRate) / 100.0;
         currentItems[index] = existing.copyWith(
           quantity: newQty,
@@ -212,7 +267,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
         );
       }
 
-      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.overallDiscount, state.customPaidAmount);
+      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
     });
 
     on<UpdateCartQuantityEvent>((event, emit) {
@@ -226,7 +281,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
         if (newQty <= 0) {
           currentItems.removeAt(index);
         } else {
-          final lineSubtotal = existing.unitPrice * newQty;
+          final lineSubtotal = existing.unitPrice * newQty - existing.discountAmount;
           final lineTax = (lineSubtotal * existing.gstRate) / 100.0;
           currentItems[index] = existing.copyWith(
             quantity: newQty,
@@ -236,23 +291,75 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
         }
       }
 
-      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.overallDiscount, state.customPaidAmount);
+      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
+    });
+
+    on<UpdateCartItemPriceEvent>((event, emit) {
+      final currentItems = List<InvoiceItem>.from(state.items);
+      final index = currentItems.indexWhere((i) => i.productId == event.productId);
+
+      if (index != -1) {
+        final existing = currentItems[index];
+        final lineSubtotal = event.newPrice * existing.quantity - existing.discountAmount;
+        final lineTax = (lineSubtotal * existing.gstRate) / 100.0;
+        currentItems[index] = existing.copyWith(
+          unitPrice: event.newPrice,
+          taxAmount: lineTax,
+          totalAmount: lineSubtotal,
+        );
+      }
+
+      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
+    });
+
+    on<UpdateCartItemDiscountEvent>((event, emit) {
+      final currentItems = List<InvoiceItem>.from(state.items);
+      final index = currentItems.indexWhere((i) => i.productId == event.productId);
+
+      if (index != -1) {
+        final existing = currentItems[index];
+        final lineSubtotal = existing.unitPrice * existing.quantity - event.newDiscount;
+        final lineTax = (lineSubtotal * existing.gstRate) / 100.0;
+        currentItems[index] = existing.copyWith(
+          discountAmount: event.newDiscount,
+          taxAmount: lineTax,
+          totalAmount: lineSubtotal,
+        );
+      }
+
+      _recalculateAndEmit(emit, currentItems, state.customer, state.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
+    });
+
+    on<AddExtraExpenseEvent>((event, emit) {
+      final currentExpenses = List<ExtraExpenseItem>.from(state.extraExpenses);
+      currentExpenses.add(ExtraExpenseItem(
+        id: const Uuid().v4(),
+        name: event.name,
+        amount: event.amount,
+      ));
+      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, currentExpenses, state.overallDiscount, state.customPaidAmount);
+    });
+
+    on<RemoveExtraExpenseEvent>((event, emit) {
+      final currentExpenses = List<ExtraExpenseItem>.from(state.extraExpenses)
+        ..removeWhere((e) => e.id == event.expenseId);
+      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, currentExpenses, state.overallDiscount, state.customPaidAmount);
     });
 
     on<SetCustomerEvent>((event, emit) {
-      _recalculateAndEmit(emit, state.items, event.customer, state.paymentType, state.overallDiscount, state.customPaidAmount);
+      _recalculateAndEmit(emit, state.items, event.customer, state.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
     });
 
     on<SetPaymentTypeEvent>((event, emit) {
-      _recalculateAndEmit(emit, state.items, state.customer, event.paymentType, state.overallDiscount, state.customPaidAmount);
+      _recalculateAndEmit(emit, state.items, state.customer, event.paymentType, state.extraExpenses, state.overallDiscount, state.customPaidAmount);
     });
 
     on<SetDiscountEvent>((event, emit) {
-      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, event.discount, state.customPaidAmount);
+      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, state.extraExpenses, event.discount, state.customPaidAmount);
     });
 
     on<SetPaidAmountEvent>((event, emit) {
-      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, state.overallDiscount, event.amount);
+      _recalculateAndEmit(emit, state.items, state.customer, state.paymentType, state.extraExpenses, state.overallDiscount, event.amount);
     });
 
     on<SaveInvoiceEvent>((event, emit) async {
@@ -318,15 +425,18 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     List<InvoiceItem> items,
     Customer customer,
     PaymentType paymentType,
+    List<ExtraExpenseItem> extraExpenses,
     double discount,
     double customPaidAmount,
   ) {
     final biz = AppDatabase.instance.currentBusiness;
+    final extraTotal = extraExpenses.fold(0.0, (sum, e) => sum + e.amount);
     final totals = calculateTotals.execute(
       items: items,
       overallDiscount: discount,
       gstEnabled: biz?.gstEnabled ?? true,
       isInterState: false,
+      extraExpensesTotal: extraTotal,
     );
 
     final grand = totals['grandTotal']!;
@@ -340,6 +450,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       items: items,
       customer: customer,
       paymentType: paymentType,
+      extraExpenses: extraExpenses,
       overallDiscount: discount,
       customPaidAmount: customPaidAmount,
       subtotal: totals['subtotal']!,

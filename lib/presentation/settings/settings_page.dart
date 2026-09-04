@@ -18,7 +18,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
-        title: const Text('Settings & Configuration'),
+        title: const Text('More & Settings'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -58,6 +58,51 @@ class SettingsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
+
+                  // 1. Business Management & Directory
+                  Text('Business Management', style: AppTextStyles.h2),
+                  const SizedBox(height: AppSpacing.xs),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.people_alt_outlined, color: AppColors.brightCyan),
+                          title: Text(
+                            biz?.terminology.customers ?? 'Customers',
+                            style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text('Manage ${biz?.terminology.customers.toLowerCase() ?? "customers"} directory & credit balances'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(RouteConstants.customers),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.analytics_outlined, color: AppColors.darkNavy),
+                          title: const Text('Analytics & Reports'),
+                          subtitle: const Text('Sales reports, GST summary & profit analysis'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(RouteConstants.reports),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.darkNavy),
+                          title: const Text('Expense Tracker'),
+                          subtitle: const Text('Track business overheads, bills & vendor expenses'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/expenses'),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.auto_awesome, color: AppColors.brightCyan),
+                          title: const Text('Smart AI Insights'),
+                          subtitle: const Text('Sales forecasts, inventory alerts & growth recommendations'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/smart'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
                   // 1. Business Profile & Type Selection
                   Text('Business Profile', style: AppTextStyles.h2),

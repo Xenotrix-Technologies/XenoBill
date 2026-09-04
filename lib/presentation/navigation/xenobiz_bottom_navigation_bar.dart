@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 import 'floating_add_invoice_button.dart';
 import 'navigation_item.dart';
 
 class XenobizBottomNavigationBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
-  final String shopLabel;
-  final IconData shopIcon;
-  final IconData shopSelectedIcon;
+  final String inventoryLabel;
+  final IconData inventoryIcon;
+  final IconData inventorySelectedIcon;
 
   const XenobizBottomNavigationBar({
     super.key,
     required this.selectedIndex,
     required this.onItemTapped,
-    this.shopLabel = 'Shop',
-    this.shopIcon = Icons.storefront_outlined,
-    this.shopSelectedIcon = Icons.storefront,
+    this.inventoryLabel = 'Inventory',
+    this.inventoryIcon = Icons.inventory_2_outlined,
+    this.inventorySelectedIcon = Icons.inventory_2,
   });
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const double barHeight = 64.0;
-    const double fabSize = 58.0;
-    final double totalHeight = barHeight + 18.0 + bottomInset;
+    const double barHeight = 60.0;
+    const double fabSize = 50.0;
+    const double fabOverlap = 10.0;
+    final double totalHeight = barHeight + fabOverlap + bottomInset;
 
     return SizedBox(
       height: totalHeight,
@@ -32,7 +32,7 @@ class XenobizBottomNavigationBar extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // Continuous Rounded Dark Navigation Bar Container (Docked at bottom)
+          // Flat White Navigation Bar Container at exact bottom
           Positioned(
             left: 0,
             right: 0,
@@ -41,23 +41,21 @@ class XenobizBottomNavigationBar extends StatelessWidget {
               height: barHeight + bottomInset,
               padding: EdgeInsets.only(bottom: bottomInset),
               decoration: BoxDecoration(
-                color: AppColors.darkNavy,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                color: Colors.white,
+                border: const Border(
+                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
+                    color: Colors.black.withAlpha(8),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // LEFT SIDE: Home, Sales
+                  // 1. Home
                   Expanded(
                     child: NavigationItem(
                       label: 'Home',
@@ -68,39 +66,43 @@ class XenobizBottomNavigationBar extends StatelessWidget {
                       semanticLabel: 'Home',
                     ),
                   ),
+
+                  // 2. Sales
                   Expanded(
                     child: NavigationItem(
                       label: 'Sales',
-                      icon: Icons.receipt_long_outlined,
-                      selectedIcon: Icons.receipt_long_rounded,
+                      icon: Icons.shopping_bag_outlined,
+                      selectedIcon: Icons.shopping_bag,
                       isSelected: selectedIndex == 1,
                       onTap: () => onItemTapped(1),
                       semanticLabel: 'Sales',
                     ),
                   ),
 
-                  // CENTER: Clearance space for floating Add Invoice button
-                  const SizedBox(width: fabSize + 8),
+                  // 3. Center clearance space for + button
+                  const SizedBox(width: fabSize),
 
-                  // RIGHT SIDE: Shop/Business/Hotel/Menu, Settings
+                  // 4. Inventory
                   Expanded(
                     child: NavigationItem(
-                      label: shopLabel,
-                      icon: shopIcon,
-                      selectedIcon: shopSelectedIcon,
+                      label: inventoryLabel,
+                      icon: inventoryIcon,
+                      selectedIcon: inventorySelectedIcon,
                       isSelected: selectedIndex == 3,
                       onTap: () => onItemTapped(3),
-                      semanticLabel: shopLabel,
+                      semanticLabel: inventoryLabel,
                     ),
                   ),
+
+                  // 5. More
                   Expanded(
                     child: NavigationItem(
-                      label: 'Settings',
-                      icon: Icons.settings_outlined,
-                      selectedIcon: Icons.settings_rounded,
+                      label: 'More',
+                      icon: Icons.more_horiz_rounded,
+                      selectedIcon: Icons.more_horiz_rounded,
                       isSelected: selectedIndex == 4,
                       onTap: () => onItemTapped(4),
-                      semanticLabel: 'Settings',
+                      semanticLabel: 'More',
                     ),
                   ),
                 ],
@@ -108,7 +110,7 @@ class XenobizBottomNavigationBar extends StatelessWidget {
             ),
           ),
 
-          // CENTER: Floating Add Invoice Button (Raised with White Ring)
+          // CENTER "+": Royal Blue circular button slightly overlapping top edge
           Positioned(
             top: 0,
             child: FloatingAddInvoiceButton(

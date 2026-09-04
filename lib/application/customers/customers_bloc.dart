@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/customer.dart';
+import '../../domain/entities/customer_payment.dart';
 import '../../domain/repositories/repositories.dart';
 
 abstract class CustomersEvent extends Equatable {
@@ -32,12 +33,26 @@ class UpdateCustomerEvent extends CustomersEvent {
   List<Object?> get props => [customer];
 }
 
+class DeleteCustomerEvent extends CustomersEvent {
+  final String customerId;
+  const DeleteCustomerEvent(this.customerId);
+  @override
+  List<Object?> get props => [customerId];
+}
+
 class RecordCustomerPaymentEvent extends CustomersEvent {
   final String customerId;
   final double amount;
   const RecordCustomerPaymentEvent({required this.customerId, required this.amount});
   @override
   List<Object?> get props => [customerId, amount];
+}
+
+class RecordDetailedCustomerPaymentEvent extends CustomersEvent {
+  final CustomerPayment payment;
+  const RecordDetailedCustomerPaymentEvent(this.payment);
+  @override
+  List<Object?> get props => [payment];
 }
 
 abstract class CustomersState extends Equatable {
@@ -102,8 +117,18 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
       add(LoadCustomersEvent());
     });
 
+    on<DeleteCustomerEvent>((event, emit) async {
+      await repository.deleteCustomer(event.customerId);
+      add(LoadCustomersEvent());
+    });
+
     on<RecordCustomerPaymentEvent>((event, emit) async {
       await repository.recordPayment(event.customerId, event.amount);
+      add(LoadCustomersEvent());
+    });
+
+    on<RecordDetailedCustomerPaymentEvent>((event, emit) async {
+      await repository.recordCustomerPayment(event.payment);
       add(LoadCustomersEvent());
     });
   }

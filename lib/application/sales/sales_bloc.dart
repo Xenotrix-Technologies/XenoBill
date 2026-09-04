@@ -85,6 +85,8 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       if (state is SalesLoaded) {
         final currentState = state as SalesLoaded;
         final query = event.searchQuery.toLowerCase();
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
         
         final filtered = currentState.allInvoices.where((inv) {
           final matchesQuery = inv.invoiceNumber.toLowerCase().contains(query) ||
@@ -92,10 +94,24 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
           
           bool matchesPayment = true;
           if (event.paymentFilter != 'All') {
-            matchesPayment = inv.paymentType.name.toLowerCase() == event.paymentFilter.toLowerCase();
+            if (event.paymentFilter.toLowerCase() == 'pending') {
+              matchesPayment = inv.dueAmount > 0 || inv.paymentType == PaymentType.credit || inv.status == InvoiceStatus.credit;
+            } else {
+              matchesPayment = inv.paymentType.name.toLowerCase() == event.paymentFilter.toLowerCase();
+            }
           }
 
-          return matchesQuery && matchesPayment;
+          bool matchesDate = true;
+          final d = event.dateRange.toLowerCase();
+          if (d == 'today') {
+            matchesDate = inv.invoiceDate.isAfter(todayStart.subtract(const Duration(seconds: 1)));
+          } else if (d == '7 days') {
+            matchesDate = inv.invoiceDate.isAfter(now.subtract(const Duration(days: 7)));
+          } else if (d == '30 days') {
+            matchesDate = inv.invoiceDate.isAfter(now.subtract(const Duration(days: 30)));
+          }
+
+          return matchesQuery && matchesPayment && matchesDate;
         }).toList();
 
         emit(SalesLoaded(
