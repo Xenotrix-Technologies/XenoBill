@@ -10,6 +10,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_button.dart';
+import '../../core/widgets/xenobiz_app_bar.dart';
 import '../../application/business/business_bloc.dart';
 import '../../application/sales/sales_bloc.dart';
 import '../../application/inventory/inventory_bloc.dart';
@@ -108,76 +109,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildHeader(BuildContext context, Business? business, bool isDemo) {
-    final name = business?.name ?? 'My Business';
-    final type = business?.businessType ?? 'Retail Shop';
-
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(
-            color: AppColors.darkNavy,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            business?.type.icon ?? Icons.storefront,
-            color: AppColors.brightCyan,
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      style: AppTextStyles.h2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (isDemo) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.amber.shade700),
-                      ),
-                      child: Text(
-                        'DEMO MODE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.amber.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              Text(
-                '$type • ${DateFormatter.formatShortDate(DateTime.now())}',
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.auto_awesome, color: AppColors.brightCyan),
-          onPressed: () => context.push('/smart'),
-          tooltip: 'Smart Insights',
-        ),
-        IconButton(
-          icon: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.darkNavy),
-          onPressed: () => context.push('/expenses'),
-          tooltip: 'Expenses',
-        ),
-      ],
+    return XenobizHeaderAppBar(
+      business: business,
+      isDemoMode: isDemo,
+      onNotificationTap: () => context.push('/smart'),
     );
   }
 

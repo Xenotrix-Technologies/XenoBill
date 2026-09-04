@@ -15,6 +15,10 @@ class DateFormatter {
     return DateFormat('dd MMM yyyy, h:mm a').format(date);
   }
 
+  static String formatHeaderDate(DateTime date) {
+    return DateFormat('EEEE, d MMMM').format(date);
+  }
+
   static String formatDisplay(DateTime date) {
     final now = DateTime.now();
     if (date.year == now.year && date.month == now.month && date.day == now.day) {
