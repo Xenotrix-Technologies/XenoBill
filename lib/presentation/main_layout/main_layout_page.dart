@@ -1,0 +1,156 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/constants/route_constants.dart';
+import '../../application/business/business_bloc.dart';
+import '../../domain/entities/business.dart';
+import '../../domain/entities/business_type.dart';
+import '../navigation/xenobiz_bottom_navigation_bar.dart';
+
+class MainLayoutPage extends StatelessWidget {
+  final Widget child;
+
+  const MainLayoutPage({super.key, required this.child});
+
+  int _calculateSelectedIndex(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/home')) return 0;
+    if (location.startsWith('/sales')) return 1;
+    if (location.startsWith('/shop') || location.startsWith('/inventory') || location.startsWith('/customers')) return 3;
+    if (location.startsWith('/settings')) return 4;
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    switch (index) {
+      case 0:
+        context.go(RouteConstants.home);
+        break;
+      case 1:
+        context.go(RouteConstants.sales);
+        break;
+      case 2:
+        context.push(RouteConstants.addInvoice);
+        break;
+      case 3:
+        context.go(RouteConstants.shop);
+        break;
+      case 4:
+        context.go(RouteConstants.settings);
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedIndex = _calculateSelectedIndex(context);
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
+    return BlocBuilder<BusinessBloc, BusinessState>(
+      builder: (context, bizState) {
+        Business? business;
+        if (bizState is BusinessLoaded) {
+          business = bizState.business;
+        }
+
+        final shopLabel = business?.terminology.shopSectionTitle ?? 'Shop';
+        final shopIcon = business?.type.icon ?? Icons.inventory_2_outlined;
+
+        if (isDesktop) {
+          return Scaffold(
+            body: Row(
+              children: [
+                // Responsive Side Navigation for Desktop
+                Container(
+                  width: 240,
+                  color: AppColors.deepNavy,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.brightCyan,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.receipt_long, color: AppColors.deepNavy, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'XENOBIZ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      // CTA Add Invoice
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push(RouteConstants.addInvoice),
+                          icon: const Icon(Icons.add, color: AppColors.deepNavy, size: 24),
+                          label: Text(
+                            '+ ${business?.terminology.addInvoice.toUpperCase() ?? 'ADD INVOICE'}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.deepNavy, fontSize: 14),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brightCyan,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildNavTile(Icons.dashboard_outlined, Icons.dashboard, 'Home', selectedIndex == 0, () => _onItemTapped(0, context)),
+                      _buildNavTile(Icons.receipt_outlined, Icons.receipt, 'Sales', selectedIndex == 1, () => _onItemTapped(1, context)),
+                      _buildNavTile(shopIcon, shopIcon, shopLabel, selectedIndex == 3, () => _onItemTapped(3, context)),
+                      _buildNavTile(Icons.settings_outlined, Icons.settings, 'Settings', selectedIndex == 4, () => _onItemTapped(4, context)),
+                    ],
+                  ),
+                ),
+                Expanded(child: child),
+              ],
+            ),
+          );
+        }
+
+        // Mobile / Tablet Bottom Navigation Layout
+        return Scaffold(
+          body: child,
+          extendBody: false,
+          bottomNavigationBar: XenobizBottomNavigationBar(
+            selectedIndex: selectedIndex,
+            onItemTapped: (index) => _onItemTapped(index, context),
+            shopLabel: shopLabel,
+            shopIcon: shopIcon,
+            shopSelectedIcon: shopIcon,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNavTile(IconData icon, IconData activeIcon, String title, bool isSelected, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(isSelected ? activeIcon : icon, color: isSelected ? AppColors.brightCyan : Colors.white70),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isSelected ? AppColors.brightCyan : Colors.white70,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+}
