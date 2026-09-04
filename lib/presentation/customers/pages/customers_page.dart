@@ -292,7 +292,10 @@ class _CustomersPageState extends State<CustomersPage> {
                       style: AppTextStyles.bodyLarge
                           .copyWith(fontWeight: FontWeight.bold)),
                   Text(
-                      '${customer.phone.isEmpty ? "Walk-in" : customer.phone} • ${customer.totalInvoices} Invoices',
+                      customer.phone.isEmpty ? "Walk-in" : customer.phone,
+                      style: AppTextStyles.bodySmall),
+                  Text(
+                      '${customer.totalInvoices} Invoices',
                       style: AppTextStyles.bodySmall),
                 ],
               ),
@@ -405,7 +408,14 @@ class _CustomersPageState extends State<CustomersPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${customer.phone.isEmpty ? "No phone" : customer.phone} • ${customer.totalInvoices} Invoices',
+                            customer.phone.isEmpty ? "No phone" : customer.phone,
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF64748B)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${customer.totalInvoices} Invoices',
                             style: const TextStyle(
                                 fontSize: 12, color: Color(0xFF64748B)),
                             maxLines: 1,

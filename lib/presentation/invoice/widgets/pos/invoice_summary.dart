@@ -6,6 +6,9 @@ import '../../../../domain/entities/invoice.dart';
 
 class InvoiceSummary extends StatelessWidget {
   final double subtotal;
+  final double cgst;
+  final double sgst;
+  final double igst;
   final double totalTax;
   final double extraExpensesTotal;
   final double grandTotal;
@@ -15,6 +18,9 @@ class InvoiceSummary extends StatelessWidget {
   const InvoiceSummary({
     super.key,
     required this.subtotal,
+    this.cgst = 0.0,
+    this.sgst = 0.0,
+    this.igst = 0.0,
     required this.totalTax,
     required this.extraExpensesTotal,
     required this.grandTotal,
@@ -25,6 +31,9 @@ class InvoiceSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCredit = paymentType == PaymentType.credit;
+    final bool isIgst = igst > 0;
+    final double computedCgst = cgst > 0 ? cgst : (isIgst ? 0.0 : totalTax / 2.0);
+    final double computedSgst = sgst > 0 ? sgst : (isIgst ? 0.0 : totalTax / 2.0);
 
     return Container(
       decoration: BoxDecoration(
@@ -42,13 +51,30 @@ class InvoiceSummary extends StatelessWidget {
               Text(CurrencyFormatter.format(subtotal), style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
-          if (totalTax > 0) ...[
+          if (isIgst) ...[
             const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('GST / Tax', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-                Text(CurrencyFormatter.format(totalTax), style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                Text('IGST', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                Text(CurrencyFormatter.format(igst), style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('CGST', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                Text(CurrencyFormatter.format(computedCgst), style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('SGST', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                Text(CurrencyFormatter.format(computedSgst), style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
               ],
             ),
           ],

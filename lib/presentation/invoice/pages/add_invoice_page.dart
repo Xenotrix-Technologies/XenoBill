@@ -18,7 +18,6 @@ import '../widgets/pos/category_selector.dart';
 import '../widgets/pos/product_grid.dart';
 import '../widgets/pos/collapsible_cart.dart';
 import '../widgets/pos/extra_expense_section.dart';
-import '../widgets/pos/invoice_summary.dart';
 import '../widgets/pos/invoice_action_buttons.dart';
 
 class AddInvoicePage extends StatefulWidget {
@@ -212,24 +211,19 @@ class _AddInvoicePageState extends State<AddInvoicePage> {
                                 },
                               ),
                               const SizedBox(height: AppSpacing.sm),
-
-                              // 14. INVOICE SUMMARY
-                              InvoiceSummary(
-                                subtotal: invoiceState.subtotal,
-                                totalTax: invoiceState.totalTax,
-                                extraExpensesTotal: invoiceState.totalExtraExpenses,
-                                grandTotal: invoiceState.grandTotal,
-                                dueAmount: invoiceState.dueAmount,
-                                paymentType: invoiceState.paymentType,
-                              ),
-                              const SizedBox(height: AppSpacing.md),
                             ],
                           ),
                         ),
                       ),
 
-                      // 15. SAVE ACTIONS (Bottom Sticky Bar)
+                      // 15. SAVE ACTIONS & FINANCIAL SUMMARY (Bottom Sticky Bar)
                       InvoiceActionButtons(
+                        subtotal: invoiceState.subtotal,
+                        cgst: invoiceState.cgst,
+                        sgst: invoiceState.sgst,
+                        igst: invoiceState.igst,
+                        totalTax: invoiceState.totalTax,
+                        grandTotal: invoiceState.grandTotal,
                         isSaving: invoiceState.isSaving,
                         onSave: () {
                           setState(() => _shouldPrintAfterSave = false);
