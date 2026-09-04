@@ -8,7 +8,6 @@ import '../../core/constants/route_constants.dart';
 import '../../core/widgets/app_card.dart';
 import '../../application/business/business_bloc.dart';
 import '../../infrastructure/database/app_database.dart';
-import '../../infrastructure/database/demo_data.dart';
 import '../../domain/entities/business_type.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -26,7 +25,7 @@ class SettingsPage extends StatelessWidget {
           padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
           child: BlocBuilder<BusinessBloc, BusinessState>(
             builder: (context, state) {
-              final biz = AppDatabase.instance.currentBusiness ?? DemoData.demoBusiness;
+              final biz = (state is BusinessLoaded) ? state.business : AppDatabase.instance.currentBusiness;
               final isDemo = AppDatabase.instance.isDemoMode;
 
               return Column(
@@ -67,23 +66,23 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: Icon(biz.type.icon, color: AppColors.brightCyan),
-                          title: Text(biz.name, style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${biz.businessType} • ${biz.phone.isEmpty ? "No phone" : biz.phone}'),
+                          leading: Icon(biz?.type.icon ?? Icons.storefront, color: AppColors.brightCyan),
+                          title: Text(biz?.name ?? 'My Business', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+                          subtitle: Text('${biz?.businessType ?? "Retail"} • ${(biz?.phone.isEmpty ?? true) ? "No phone" : biz!.phone}'),
                           trailing: IconButton(
                             icon: const Icon(Icons.edit, color: AppColors.darkNavy),
-                            onPressed: () => context.push(RouteConstants.businessSetup, extra: biz.type),
+                            onPressed: () => context.push(RouteConstants.businessSetup, extra: biz?.type ?? BusinessType.retail),
                           ),
                         ),
                         const Divider(),
                         ListTile(
                           leading: const Icon(Icons.category, color: AppColors.darkNavy),
                           title: const Text('Change Business Type'),
-                          subtitle: Text('Current: ${biz.businessType} (Never deletes data)'),
+                          subtitle: Text('Current: ${biz?.businessType ?? "Retail"} (Never deletes data)'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push(RouteConstants.businessTypeSelection),
                         ),
-                        if (biz.address.isNotEmpty) ...[
+                        if (biz != null && biz.address.isNotEmpty) ...[
                           const Divider(),
                           ListTile(
                             leading: const Icon(Icons.location_on_outlined, color: AppColors.darkNavy),
@@ -91,7 +90,7 @@ class SettingsPage extends StatelessWidget {
                             subtitle: Text(biz.address),
                           ),
                         ],
-                        if (biz.gstEnabled) ...[
+                        if (biz != null && biz.gstEnabled) ...[
                           const Divider(),
                           ListTile(
                             leading: const Icon(Icons.receipt_long, color: AppColors.darkNavy),
@@ -113,7 +112,7 @@ class SettingsPage extends StatelessWidget {
                         ListTile(
                           leading: const Icon(Icons.pin, color: AppColors.darkNavy),
                           title: const Text('Invoice Prefix & Sequence'),
-                          subtitle: Text('${biz.invoicePrefix}-${biz.nextInvoiceNumber}'),
+                          subtitle: Text('${biz?.invoicePrefix ?? "INV"}-${biz?.nextInvoiceNumber ?? 1001}'),
                         ),
                         const Divider(),
                         const ListTile(

@@ -8,7 +8,6 @@ import '../../domain/entities/customer.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/entities/expense.dart';
 import '../../domain/entities/smart_insight.dart';
-import 'demo_data.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._internal();
@@ -52,12 +51,25 @@ class AppDatabase {
 
   void loadDemoData() {
     isDemoMode = true;
-    currentBusiness = DemoData.demoBusiness;
-    items = List.from(DemoData.demoItems);
-    customers = List.from(DemoData.demoCustomers);
-    invoices = List.from(DemoData.demoInvoices);
-    expenses = List.from(DemoData.demoExpenses);
-    smartInsights = List.from(DemoData.demoInsights);
+    currentBusiness = Business(
+      id: 'biz_demo_1',
+      name: 'Demo Store & Services',
+      businessType: BusinessType.retail,
+      phone: '9876543210',
+      email: 'demo@xenobiz.com',
+      address: 'Demo Market, Station Road',
+      gstEnabled: true,
+      gstin: '27AABCU9603R1ZM',
+      currency: '₹',
+      invoicePrefix: 'INV',
+      nextInvoiceNumber: 1001,
+      features: BusinessType.retail.defaultFeatures,
+    );
+    items = [];
+    customers = [];
+    invoices = [];
+    expenses = [];
+    smartInsights = [];
   }
 
   Future<void> createNewBusiness(Business business) async {

@@ -55,9 +55,7 @@ class BusinessBloc extends Bloc<BusinessEvent, BusinessState> {
         if (biz != null) {
           emit(BusinessLoaded(biz, isDemoMode: AppDatabase.instance.isDemoMode));
         } else {
-          // If no business exists, load demo as fallback
-          AppDatabase.instance.loadDemoData();
-          emit(BusinessLoaded(AppDatabase.instance.currentBusiness!, isDemoMode: true));
+          emit(BusinessInitial());
         }
       }
     });
