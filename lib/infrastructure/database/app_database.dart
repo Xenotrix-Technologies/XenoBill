@@ -10,6 +10,8 @@ import '../../domain/entities/invoice.dart';
 import '../../domain/entities/expense.dart';
 import '../../domain/entities/smart_insight.dart';
 
+import '../../domain/entities/invoice_display_settings.dart';
+
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._internal();
   AppDatabase._internal();
@@ -20,6 +22,7 @@ class AppDatabase {
   bool isBusinessConfigured = false;
 
   Business? currentBusiness;
+  InvoiceDisplaySettings invoiceDisplaySettings = const InvoiceDisplaySettings();
   List<Item> items = [];
   List<Customer> customers = [];
   List<CustomerPayment> customerPayments = [];
@@ -34,6 +37,13 @@ class AppDatabase {
     isDemoMode = prefs.getBool('is_demo_mode') ?? false;
     isLoggedIn = prefs.getBool('is_logged_in') ?? false;
     isBusinessConfigured = prefs.getBool('is_business_configured') ?? false;
+
+    final invSettingsStr = prefs.getString('invoice_settings_json');
+    if (invSettingsStr != null) {
+      try {
+        invoiceDisplaySettings = InvoiceDisplaySettings.fromJsonString(invSettingsStr);
+      } catch (_) {}
+    }
 
     if (isDemoMode) {
       loadDemoData();
@@ -294,6 +304,7 @@ class AppDatabase {
     await prefs.setBool('is_demo_mode', isDemoMode);
     await prefs.setBool('is_logged_in', isLoggedIn);
     await prefs.setBool('is_business_configured', isBusinessConfigured);
+    await prefs.setString('invoice_settings_json', invoiceDisplaySettings.toJsonString());
 
     if (!isDemoMode && currentBusiness != null) {
       await prefs.setString('business_json', jsonEncode({

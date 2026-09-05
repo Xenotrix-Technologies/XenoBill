@@ -18,6 +18,8 @@ class AppTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final bool autoFocus;
 
+  final int maxLines;
+
   const AppTextField({
     super.key,
     required this.label,
@@ -33,6 +35,7 @@ class AppTextField extends StatelessWidget {
     this.onTap,
     this.focusNode,
     this.autoFocus = false,
+    this.maxLines = 1,
   });
 
   @override
@@ -52,6 +55,7 @@ class AppTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          maxLines: maxLines,
           validator: validator,
           onChanged: onChanged,
           readOnly: readOnly,

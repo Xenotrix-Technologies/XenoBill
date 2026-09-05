@@ -20,6 +20,10 @@ class RouteConstants {
   static const String customerProfile = '/customers/profile';
   static const String reports = '/reports';
   static const String settings = '/settings';
+  static const String invoiceSettings = '/settings/invoice';
+  static const String businessSettings = '/settings/business';
+  static const String editBusinessProfile = '/settings/business/profile';
+  static const String gstSettings = '/settings/business/gst';
 }
 
 class StorageConstants {

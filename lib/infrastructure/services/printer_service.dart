@@ -5,6 +5,7 @@ import '../../domain/entities/invoice.dart';
 import '../../domain/entities/business.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
+import '../database/app_database.dart';
 
 class PrinterService {
   PrinterService._();
@@ -14,21 +15,27 @@ class PrinterService {
     required Business business,
   }) async {
     final pdf = pw.Document();
+    final settings = AppDatabase.instance.invoiceDisplaySettings;
+
+    final pageFormat = settings.paperSize == 'A4'
+        ? PdfPageFormat.a4
+        : (settings.paperSize == 'A5' ? PdfPageFormat.a5 : PdfPageFormat.roll80);
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
+        pageFormat: pageFormat,
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Center(
-                child: pw.Text(
-                  business.name,
-                  style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+              if (settings.showBusinessName)
+                pw.Center(
+                  child: pw.Text(
+                    business.name,
+                    style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+                  ),
                 ),
-              ),
-              if (business.address.isNotEmpty)
+              if (settings.showBusinessAddress && business.address.isNotEmpty)
                 pw.Center(
                   child: pw.Text(
                     business.address,
@@ -36,20 +43,28 @@ class PrinterService {
                     textAlign: pw.TextAlign.center,
                   ),
                 ),
-              if (business.phone.isNotEmpty)
+              if (settings.showPhone && business.phone.isNotEmpty)
                 pw.Center(
                   child: pw.Text('Ph: ${business.phone}', style: const pw.TextStyle(fontSize: 8)),
                 ),
-              if (business.gstEnabled && business.gstin.isNotEmpty)
+              if (settings.showGstin && business.gstEnabled && business.gstin.isNotEmpty)
                 pw.Center(
                   child: pw.Text('GSTIN: ${business.gstin}', style: const pw.TextStyle(fontSize: 8)),
                 ),
               pw.Divider(thickness: 0.5),
-              pw.Text('Invoice #: ${invoice.invoiceNumber}', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-              pw.Text('Date: ${DateFormatter.formatDateTime(invoice.invoiceDate)}', style: const pw.TextStyle(fontSize: 8)),
-              pw.Text('Customer: ${invoice.customerName}', style: const pw.TextStyle(fontSize: 8)),
+              if (settings.showInvoiceNumber)
+                pw.Text('Invoice #: ${invoice.invoiceNumber}', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+              if (settings.showInvoiceDate)
+                pw.Text(
+                  settings.showInvoiceTime
+                      ? 'Date: ${DateFormatter.formatDateTime(invoice.invoiceDate)}'
+                      : 'Date: ${DateFormatter.formatShortDate(invoice.invoiceDate)}',
+                  style: const pw.TextStyle(fontSize: 8),
+                ),
+              if (settings.showCustomerDetails && invoice.customerName.isNotEmpty)
+                pw.Text('Customer: ${invoice.customerName}', style: const pw.TextStyle(fontSize: 8)),
               pw.Divider(thickness: 0.5),
-              // Items
+              // Items Table
               pw.Table(
                 columnWidths: {
                   0: const pw.FlexColumnWidth(3),
@@ -60,7 +75,8 @@ class PrinterService {
                   pw.TableRow(
                     children: [
                       pw.Text('Item', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8)),
-                      pw.Text('Qty', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8), textAlign: pw.TextAlign.center),
+                      if (settings.showQuantity)
+                        pw.Text('Qty', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8), textAlign: pw.TextAlign.center),
                       pw.Text('Amount', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8), textAlign: pw.TextAlign.right),
                     ],
                   ),
@@ -68,7 +84,8 @@ class PrinterService {
                     (item) => pw.TableRow(
                       children: [
                         pw.Text(item.productName, style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text('${item.quantity}', style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
+                        if (settings.showQuantity)
+                          pw.Text('${item.quantity}', style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
                         pw.Text(CurrencyFormatter.formatNoDecimal(item.totalAmount), style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.right),
                       ],
                     ),
@@ -76,19 +93,45 @@ class PrinterService {
                 ],
               ),
               pw.Divider(thickness: 0.5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Grand Total:', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                  pw.Text(CurrencyFormatter.format(invoice.grandTotal), style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                ],
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text('Payment Mode: ${invoice.paymentType.name.toUpperCase()}', style: const pw.TextStyle(fontSize: 8)),
+              if (settings.showSubtotal)
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Subtotal:', style: const pw.TextStyle(fontSize: 8)),
+                    pw.Text(CurrencyFormatter.format(invoice.subtotal), style: const pw.TextStyle(fontSize: 8)),
+                  ],
+                ),
+              if (settings.showTaxRowAndRate && settings.showTaxTotal && business.gstEnabled)
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('GST Total:', style: const pw.TextStyle(fontSize: 8)),
+                    pw.Text(CurrencyFormatter.format(invoice.cgst + invoice.sgst + invoice.igst), style: const pw.TextStyle(fontSize: 8)),
+                  ],
+                ),
+              if (settings.showGrandTotal)
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Grand Total:', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    pw.Text(CurrencyFormatter.format(invoice.grandTotal), style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                  ],
+                ),
+              if (settings.showPaymentMethod) ...[
+                pw.SizedBox(height: 4),
+                pw.Text('Payment Mode: ${invoice.paymentType.name.toUpperCase()}', style: const pw.TextStyle(fontSize: 8)),
+              ],
               pw.SizedBox(height: 10),
-              pw.Center(
-                child: pw.Text('Thank you! Visit Again.', style: const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
-              ),
+              if (settings.showFooterMessage && settings.footerMessage.isNotEmpty)
+                pw.Center(
+                  child: pw.Text(settings.footerMessage, style: const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                ),
+              if (settings.showTermsAndConditions && settings.termsAndConditions.isNotEmpty) ...[
+                pw.SizedBox(height: 4),
+                pw.Center(
+                  child: pw.Text(settings.termsAndConditions, style: const pw.TextStyle(fontSize: 7), textAlign: pw.TextAlign.center),
+                ),
+              ],
             ],
           );
         },

@@ -22,6 +22,10 @@ import '../../presentation/customers/pages/customers_page.dart';
 import '../../presentation/customers/pages/add_edit_customer_page.dart';
 import '../../presentation/reports/reports_page.dart';
 import '../../presentation/settings/settings_page.dart';
+import '../../presentation/settings/pages/business_settings_page.dart';
+import '../../presentation/settings/pages/business_profile_edit_page.dart';
+import '../../presentation/settings/pages/gst_settings_page.dart';
+import '../../presentation/settings/pages/invoice_settings_page.dart';
 import '../../presentation/expenses/expenses_page.dart';
 import '../../presentation/smart/smart_insights_page.dart';
 
@@ -144,6 +148,26 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/smart',
         builder: (context, state) => const SmartInsightsPage(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: RouteConstants.businessSettings,
+        builder: (context, state) => const BusinessSettingsPage(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: RouteConstants.editBusinessProfile,
+        builder: (context, state) => const BusinessProfileEditPage(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: RouteConstants.gstSettings,
+        builder: (context, state) => const GstSettingsPage(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: RouteConstants.invoiceSettings,
+        builder: (context, state) => const InvoiceSettingsPage(),
       ),
       // Main Shell Route with Floating Navigation Bar
       ShellRoute(
