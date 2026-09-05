@@ -44,5 +44,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Environment & Secrets
+.env
+.env.*
+*.env
+supabase_keys.json
+secrets.json
+
 # Widget Preview related
 .widget_preview/
+

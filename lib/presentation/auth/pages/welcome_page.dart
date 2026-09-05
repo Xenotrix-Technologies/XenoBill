@@ -1,104 +1,398 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_text_styles.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/route_constants.dart';
-import '../../../core/widgets/app_button.dart';
+import '../../../application/auth/auth_bloc.dart';
+import '../../../application/auth/auth_event.dart';
+import '../../../application/auth/auth_state.dart';
 import '../../../application/business/business_bloc.dart';
+import 'forgot_password_page.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  final _formKey = GlobalKey<FormState>();
+  final _contactController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _contactController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _onLoginPressed() {
+    if (_formKey.currentState!.validate()) {
+      final input = _contactController.text.trim();
+      final email = input.contains('@') ? input : '$input@xenobiz.internal';
+
+      context.read<AuthBloc>().add(
+            AuthLoginRequested(
+              email: email,
+              password: _passwordController.text,
+            ),
+          );
+    }
+  }
+
+  void _onRegisterPressed() {
+    if (_contactController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+      if (_formKey.currentState!.validate()) {
+        final input = _contactController.text.trim();
+        final email = input.contains('@') ? input : '$input@xenobiz.internal';
+
+        context.read<AuthBloc>().add(
+              AuthRegisterRequested(
+                email: email,
+                password: _passwordController.text,
+                name: 'Shop Owner',
+              ),
+            );
+        return;
+      }
+    }
+    context.push(RouteConstants.register);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.deepNavy,
+      backgroundColor: const Color(0xFF030712), // Deep dark navy background
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
-              // App Logo / Icon
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: AppColors.darkNavy,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.brightCyan, width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: AppColors.brightCyan,
-                      blurRadius: 20,
-                      spreadRadius: -5,
-                    ),
-                  ],
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthenticationError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.redAccent,
                 ),
-                child: const Icon(
-                  Icons.receipt_long,
-                  size: 48,
-                  color: AppColors.brightCyan,
+              );
+            } else if (state is Authenticated) {
+              context.go(RouteConstants.home);
+            } else if (state is EmailVerificationRequired) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Verification email sent to ${state.email}. Please verify your email.'),
+                  backgroundColor: Colors.blueAccent,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'XENOBIZ',
-                style: AppTextStyles.h1.copyWith(
-                  color: Colors.white,
-                  letterSpacing: 3.0,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Simple billing. Smarter business.',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.brightCyan,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
+              );
+            }
+          },
+          builder: (context, state) {
+            final isLoading = state is AuthLoading;
 
-              // Action Buttons
-              AppButton(
-                text: 'Register',
-                width: double.infinity,
-                onPressed: () => context.push(RouteConstants.register),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+
+                  // 1. TOP BAR (Cyan Square X Logo & v1.0 badge)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E5FF),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'X',
+                          style: TextStyle(
+                            color: Color(0xFF050B18),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        'v1.0',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  // 2. TYPOGRAPHY HEADLINE
+                  const Text(
+                    'Xenobiz',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Simple billing. Smarter business.',
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // 3. AUTH INPUT CARD
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0B192C).withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDarkTextField(
+                            label: 'Email or Mobile',
+                            hint: 'e.g. user@example.com or 9876543210',
+                            controller: _contactController,
+                            prefixIcon: Icons.email_outlined,
+                            validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDarkTextField(
+                            label: 'Password',
+                            hint: '••••••••',
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            prefixIcon: Icons.lock_outline,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                color: const Color(0xFF64748B),
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                          ),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                                );
+                              },
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: Color(0xFF00E5FF),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  // 4. ACTION BUTTONS (1. Login -> 2. Register -> 3. Start Demo)
+                  // 1st Button: Login (Pill shape bright cyan primary)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _onLoginPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00E5FF),
+                        foregroundColor: const Color(0xFF050B18),
+                        elevation: 4,
+                        shadowColor: const Color(0xFF00E5FF).withValues(alpha: 0.35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: Text(
+                        isLoading ? 'Logging in...' : 'Login',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // 2nd Button: Register (Pill shape dark navy with border)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _onRegisterPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0B192C),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        side: const BorderSide(color: Color(0xFF1E293B), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // 3rd Button: Start Demo (Outlined Pill with Arrow ->)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        context.read<BusinessBloc>().add(const ToggleDemoModeEvent(true));
+                        context.go(RouteConstants.home);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF334155), width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Start Demo ',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 5. FOOTER CAPTION
+                  const Center(
+                    child: Text(
+                      'Demo mode uses sample data — nothing is saved',
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton(
-                text: 'Login',
-                isSecondary: true,
-                width: double.infinity,
-                onPressed: () => context.push(RouteConstants.login),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton(
-                text: 'Start Demo (Explore Offline POS)',
-                isOutlined: true,
-                customTextColor: AppColors.brightCyan,
-                width: double.infinity,
-                onPressed: () {
-                  context.read<BusinessBloc>().add(const ToggleDemoModeEvent(true));
-                  context.go(RouteConstants.home);
-                },
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Offline-First Local POS • Built for Speed',
-                style: AppTextStyles.bodySmall.copyWith(color: Colors.white54),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-          ),
+            );
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildDarkTextField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required IconData prefixIcon,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          validator: validator,
+          style: const TextStyle(color: Colors.white, fontSize: 14.5),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF475569), fontSize: 14),
+            prefixIcon: Icon(prefixIcon, color: const Color(0xFF00E5FF), size: 20),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: const Color(0xFF050B18),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF1E293B)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF00E5FF), width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

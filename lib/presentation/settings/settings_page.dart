@@ -17,7 +17,11 @@ import 'widgets/destructive_action_tile.dart';
 import 'widgets/invoice_settings_modals.dart';
 import 'widgets/app_preferences_modals.dart';
 
+import '../../application/auth/auth_bloc.dart';
+import '../../application/auth/auth_event.dart';
+
 class SettingsPage extends StatefulWidget {
+
   const SettingsPage({super.key});
 
   @override
@@ -55,9 +59,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              AppDatabase.instance.isLoggedIn = false;
+              context.read<AuthBloc>().add(const AuthSignOutRequested());
               context.go(RouteConstants.welcome);
             },
+
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

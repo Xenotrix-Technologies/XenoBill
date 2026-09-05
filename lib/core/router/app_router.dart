@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../constants/route_constants.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../presentation/auth/pages/welcome_page.dart';
@@ -28,7 +30,6 @@ import '../../presentation/settings/pages/gst_settings_page.dart';
 import '../../presentation/settings/pages/invoice_settings_page.dart';
 import '../../presentation/expenses/expenses_page.dart';
 import '../../presentation/smart/smart_insights_page.dart';
-
 import '../../presentation/customers/pages/customer_profile_page.dart';
 
 class AppRouter {
@@ -42,29 +43,33 @@ class AppRouter {
     initialLocation: RouteConstants.welcome,
     redirect: (context, state) {
       final db = AppDatabase.instance;
+      final hasSupabaseSession = Supabase.instance.client.auth.currentSession != null;
+      final isAuthenticated = db.isLoggedIn || hasSupabaseSession;
+
       final isWelcomeRoute = state.matchedLocation == RouteConstants.welcome;
       final isAuthRoute = state.matchedLocation == RouteConstants.login ||
                           state.matchedLocation == RouteConstants.register ||
                           state.matchedLocation == RouteConstants.businessTypeSelection ||
                           state.matchedLocation == RouteConstants.businessSetup;
 
-      if (!db.isLoggedIn && !isWelcomeRoute && !isAuthRoute) {
+      if (!isAuthenticated && !isWelcomeRoute && !isAuthRoute) {
         return RouteConstants.welcome;
       }
 
-      if (db.isLoggedIn && !db.isBusinessConfigured) {
+      if (isAuthenticated && !db.isBusinessConfigured) {
         if (state.matchedLocation != RouteConstants.businessTypeSelection &&
             state.matchedLocation != RouteConstants.businessSetup) {
           return RouteConstants.businessTypeSelection;
         }
       }
 
-      if (db.isLoggedIn && db.isBusinessConfigured && (isWelcomeRoute || isAuthRoute)) {
+      if (isAuthenticated && db.isBusinessConfigured && (isWelcomeRoute || isAuthRoute)) {
         return RouteConstants.home;
       }
 
       return null;
     },
+
     routes: [
       GoRoute(
         path: RouteConstants.welcome,

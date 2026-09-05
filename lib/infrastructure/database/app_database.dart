@@ -34,9 +34,13 @@ class AppDatabase {
     if (_initialized) return;
 
     final prefs = await SharedPreferences.getInstance();
-    isDemoMode = prefs.getBool('is_demo_mode') ?? false;
-    isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
+    // Reset demo mode on cold start so the application presents the Auth screen
+    isDemoMode = false;
+    isLoggedIn = false;
     isBusinessConfigured = prefs.getBool('is_business_configured') ?? false;
+
+
 
     final invSettingsStr = prefs.getString('invoice_settings_json');
     if (invSettingsStr != null) {
