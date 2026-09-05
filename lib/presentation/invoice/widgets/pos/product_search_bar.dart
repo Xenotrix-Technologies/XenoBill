@@ -42,7 +42,7 @@ class ProductSearchBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              focusNode: focusNode,
+              // focusNode: focusNode,
               onChanged: onChanged,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.nearBlack,
@@ -70,7 +70,8 @@ class ProductSearchBar extends StatelessWidget {
               },
               child: const Padding(
                 padding: EdgeInsets.all(4.0),
-                child: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                child:
+                    Icon(Icons.close, color: AppColors.textSecondary, size: 18),
               ),
             ),
           if (onScanTap != null) ...[
@@ -79,7 +80,8 @@ class ProductSearchBar extends StatelessWidget {
               onTap: onScanTap,
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.brightCyan.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
@@ -87,7 +89,8 @@ class ProductSearchBar extends StatelessWidget {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.qr_code_scanner, color: AppColors.darkNavy, size: 18),
+                    Icon(Icons.qr_code_scanner,
+                        color: AppColors.darkNavy, size: 18),
                     SizedBox(width: 4),
                     Text(
                       'scan',
