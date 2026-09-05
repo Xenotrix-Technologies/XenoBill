@@ -335,15 +335,6 @@ class _SettingsPageState extends State<SettingsPage> {
                           trailingText: '${biz?.invoicePrefix ?? "INV"}-${biz?.nextInvoiceNumber ?? 1001}',
                           onTap: () => PrefixNumberingModal.show(context, biz),
                         ),
-                        SettingsTile(
-                          icon: Icons.print_outlined,
-                          iconColor: const Color(0xFF059669),
-                          iconBackgroundColor: const Color(0xFFD1FAE5),
-                          title: 'Printing Formats',
-                          subtitle: 'Choose invoice print and paper formats',
-                          trailingText: 'Thermal 80mm',
-                          onTap: () => PrintingFormatsModal.show(context),
-                        ),
                       ],
                     ),
 
@@ -506,12 +497,6 @@ class _SettingsPageState extends State<SettingsPage> {
         'sub': 'Configure invoice prefixes and numbering sequence',
         'icon': Icons.pin_outlined,
         'action': () => PrefixNumberingModal.show(context, biz),
-      },
-      {
-        'title': 'Printing Formats',
-        'sub': 'Choose invoice print paper formats (Thermal, A4, A5, PDF)',
-        'icon': Icons.print_outlined,
-        'action': () => PrintingFormatsModal.show(context),
       },
       {
         'title': 'Backup & Restore',

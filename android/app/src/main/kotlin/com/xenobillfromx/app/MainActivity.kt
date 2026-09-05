@@ -1,4 +1,4 @@
-package com.example.xenobill_flutter
+package com.xenobillfromx.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -8,6 +8,7 @@ import '../../../infrastructure/database/app_database.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_group_card.dart';
 import '../widgets/invoice_preview_dialog.dart';
+import '../widgets/invoice_settings_modals.dart';
 
 class InvoiceSettingsPage extends StatefulWidget {
   const InvoiceSettingsPage({super.key});
@@ -419,7 +420,13 @@ class _InvoiceSettingsPageState extends State<InvoiceSettingsPage> {
                 children: [
                   // Paper Size Row
                   InkWell(
-                    onTap: _showPaperSizePicker,
+                    onTap: () {
+                      PrintingFormatsModal.show(
+                        context,
+                        currentSize: _settings.paperSize,
+                        onSelected: (val) => setState(() => _settings = _settings.copyWith(paperSize: val)),
+                      );
+                    },
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -435,12 +442,24 @@ class _InvoiceSettingsPageState extends State<InvoiceSettingsPage> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                            child: Text(_settings.paperSize, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _settings.paperSize,
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.darkNavy, size: 18),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
                         ],
                       ),
                     ),
@@ -449,7 +468,13 @@ class _InvoiceSettingsPageState extends State<InvoiceSettingsPage> {
 
                   // Invoice Format Row
                   InkWell(
-                    onTap: _showFormatPicker,
+                    onTap: () {
+                      InvoiceFormatModal.show(
+                        context,
+                        currentFormat: _settings.invoiceFormat,
+                        onSelected: (val) => setState(() => _settings = _settings.copyWith(invoiceFormat: val)),
+                      );
+                    },
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -465,12 +490,24 @@ class _InvoiceSettingsPageState extends State<InvoiceSettingsPage> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                            child: Text(_settings.invoiceFormat, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _settings.invoiceFormat,
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.darkNavy, size: 18),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
                         ],
                       ),
                     ),
@@ -571,70 +608,6 @@ class _InvoiceSettingsPageState extends State<InvoiceSettingsPage> {
             onChanged: enabled ? onChanged : null,
           ),
         ],
-      ),
-    );
-  }
-
-  void _showPaperSizePicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Select Paper Size', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
-            const SizedBox(height: 12),
-            ...['Thermal 80mm', 'Thermal 58mm', 'A4', 'A5'].map(
-              (size) => RadioListTile<String>(
-                value: size,
-                groupValue: _settings.paperSize,
-                title: Text(size, style: const TextStyle(fontWeight: FontWeight.w600)),
-                activeColor: AppColors.brightCyan,
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _settings = _settings.copyWith(paperSize: val));
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showFormatPicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Select Invoice Format', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
-            const SizedBox(height: 12),
-            ...['Standard', 'Compact', 'Thermal', 'Detailed'].map(
-              (fmt) => RadioListTile<String>(
-                value: fmt,
-                groupValue: _settings.invoiceFormat,
-                title: Text(fmt, style: const TextStyle(fontWeight: FontWeight.w600)),
-                activeColor: AppColors.brightCyan,
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _settings = _settings.copyWith(invoiceFormat: val));
-                    Navigator.pop(ctx);
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
