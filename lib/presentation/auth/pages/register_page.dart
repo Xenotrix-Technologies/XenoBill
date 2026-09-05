@@ -13,6 +13,7 @@ import '../../../application/auth/auth_bloc.dart';
 import '../../../application/auth/auth_event.dart';
 import '../../../application/auth/auth_state.dart';
 import '../../../application/business/business_bloc.dart';
+import 'package:uuid/uuid.dart';
 import '../../../infrastructure/database/app_database.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -121,7 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     final newBiz = Business(
-      id: 'biz_${DateTime.now().millisecondsSinceEpoch}',
+      id: const Uuid().v4(),
       name: bizName,
       businessType: _selectedType,
       phone: _bizPhoneController.text.trim().isEmpty ? _phoneController.text.trim() : _bizPhoneController.text.trim(),
@@ -137,7 +138,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
     // 2. Dispatch Business Bloc Update & AppDatabase
     AppDatabase.instance.isBusinessConfigured = true;
-    AppDatabase.instance.isLoggedIn = true;
     AppDatabase.instance.currentBusiness = newBiz;
     context.read<BusinessBloc>().add(UpdateBusinessEvent(newBiz));
 
@@ -205,11 +205,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 SnackBar(
                   content: Text(state.message),
                   backgroundColor: AppColors.error,
+                  duration: const Duration(seconds: 5),
                 ),
               );
             } else if (state is Authenticated) {
+              AppDatabase.instance.isLoggedIn = true;
               context.go(RouteConstants.home);
             } else if (state is EmailVerificationRequired) {
+              AppDatabase.instance.isLoggedIn = true;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Verification email sent to ${state.email}. Please verify before logging in.'),

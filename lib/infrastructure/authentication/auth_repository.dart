@@ -111,6 +111,10 @@ class AuthRepositoryImpl implements AuthRepository {
         throw const UserAlreadyExistsFailure();
       } else if (msg.contains('password should be at least')) {
         throw const WeakPasswordFailure();
+      } else if (msg.contains('rate limit')) {
+        throw const UnknownAuthFailure(
+          'Email rate limit exceeded. Please wait a few minutes before trying again, or disable "Confirm Email" in your Supabase Auth settings during development.',
+        );
       } else {
         throw UnknownAuthFailure(e.message);
       }

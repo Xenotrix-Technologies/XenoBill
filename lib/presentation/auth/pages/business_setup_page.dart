@@ -11,6 +11,7 @@ import '../../../domain/entities/business.dart';
 import '../../../domain/entities/business_type.dart';
 import '../../../domain/entities/business_features.dart';
 import '../../../application/business/business_bloc.dart';
+import 'package:uuid/uuid.dart';
 
 class BusinessSetupPage extends StatefulWidget {
   final BusinessType? selectedType;
@@ -158,7 +159,7 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
                     if (_formKey.currentState!.validate()) {
                       final bizName = _nameController.text.trim();
                       final newBiz = Business(
-                        id: 'biz_${DateTime.now().millisecondsSinceEpoch}',
+                        id: const Uuid().v4(),
                         name: bizName.isEmpty ? 'My Business' : bizName,
                         businessType: _businessType,
                         phone: _phoneController.text.trim(),

@@ -7,22 +7,71 @@ import '../../domain/entities/invoice.dart';
 import '../../domain/repositories/repositories.dart';
 import '../database/app_database.dart';
 
+import '../datasources/business_local_data_source.dart';
+import '../services/business_sync_service.dart';
+
 class BusinessRepositoryImpl implements BusinessRepository {
+  final BusinessLocalDataSource _localDataSource;
+  final BusinessSyncService _syncService;
   final AppDatabase db = AppDatabase.instance;
+
+  BusinessRepositoryImpl({
+    BusinessLocalDataSource? localDataSource,
+    BusinessSyncService? syncService,
+  })  : _localDataSource = localDataSource ?? BusinessLocalDataSourceImpl(),
+        _syncService = syncService ??
+            BusinessSyncService(
+              localDataSource: localDataSource ?? BusinessLocalDataSourceImpl(),
+            );
+
+  @override
+  Stream<Business?> watchCurrentBusiness() {
+    return _localDataSource.watchCurrentBusiness().map((biz) {
+      if (biz != null) {
+        db.currentBusiness = biz;
+        db.isBusinessConfigured = true;
+      }
+      return biz;
+    });
+  }
+
+  @override
+  Future<Business?> getCurrentBusiness() async {
+    final biz = await _localDataSource.getCurrentBusiness();
+    if (biz != null) {
+      db.currentBusiness = biz;
+      db.isBusinessConfigured = true;
+    }
+    return biz ?? db.currentBusiness;
+  }
 
   @override
   Future<Business?> getBusiness(String id) async {
-    return db.currentBusiness;
+    final biz = await _localDataSource.getBusinessById(id);
+    return biz ?? db.currentBusiness;
   }
 
   @override
   Future<void> saveBusiness(Business business) async {
     db.currentBusiness = business;
     db.isBusinessConfigured = true;
-    db.isDemoMode = false;
     await db.saveLocalState();
+    await _syncService.saveLocalAndSyncCloud(business);
+  }
+
+  @override
+  Future<void> updateBusiness(Business business) async {
+    db.currentBusiness = business;
+    await db.saveLocalState();
+    await _syncService.saveLocalAndSyncCloud(business);
+  }
+
+  @override
+  Future<void> syncBusiness() async {
+    await _syncService.syncOnAppStart();
   }
 }
+
 
 class ProductRepositoryImpl implements ProductRepository {
   final AppDatabase db = AppDatabase.instance;

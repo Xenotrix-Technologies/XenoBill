@@ -5,9 +5,14 @@ import '../entities/customer_payment.dart';
 import '../entities/invoice.dart';
 
 abstract class BusinessRepository {
+  Stream<Business?> watchCurrentBusiness();
+  Future<Business?> getCurrentBusiness();
   Future<Business?> getBusiness(String id);
   Future<void> saveBusiness(Business business);
+  Future<void> updateBusiness(Business business);
+  Future<void> syncBusiness();
 }
+
 
 abstract class ProductRepository {
   Future<List<Item>> getProducts(String businessId);
