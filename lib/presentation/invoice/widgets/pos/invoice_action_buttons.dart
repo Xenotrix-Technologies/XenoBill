@@ -42,9 +42,9 @@ class InvoiceActionButtons extends StatelessWidget {
             offset: const Offset(0, -4),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: SafeArea(
         top: false,
         child: Column(
@@ -57,7 +57,7 @@ class InvoiceActionButtons extends StatelessWidget {
                 const Text(
                   'Subtotal',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
                   ),
@@ -65,14 +65,14 @@ class InvoiceActionButtons extends StatelessWidget {
                 Text(
                   CurrencyFormatter.format(subtotal),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Color(0xFF0F172A),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
 
             // GST Breakdown (IGST or CGST + SGST)
             if (isIgst) ...[
@@ -82,7 +82,7 @@ class InvoiceActionButtons extends StatelessWidget {
                   const Text(
                     'IGST',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
@@ -90,14 +90,14 @@ class InvoiceActionButtons extends StatelessWidget {
                   Text(
                     CurrencyFormatter.format(igst),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF0F172A),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
             ] else ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -105,7 +105,7 @@ class InvoiceActionButtons extends StatelessWidget {
                   const Text(
                     'CGST',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
@@ -113,21 +113,21 @@ class InvoiceActionButtons extends StatelessWidget {
                   Text(
                     CurrencyFormatter.format(computedCgst),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF0F172A),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'SGST',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
@@ -135,18 +135,18 @@ class InvoiceActionButtons extends StatelessWidget {
                   Text(
                     CurrencyFormatter.format(computedSgst),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: Color(0xFF0F172A),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
             ],
 
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
 
             // Total Row
             Row(
@@ -155,7 +155,7 @@ class InvoiceActionButtons extends StatelessWidget {
                 const Text(
                   'Total',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
                   ),
@@ -163,14 +163,14 @@ class InvoiceActionButtons extends StatelessWidget {
                 Text(
                   CurrencyFormatter.format(grandTotal),
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.darkNavy,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
 
             // Buttons Row
             Row(
@@ -183,19 +183,19 @@ class InvoiceActionButtons extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.darkNavy,
                       side: const BorderSide(color: AppColors.darkNavy, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      minimumSize: const Size(0, 48),
+                      minimumSize: const Size(0, 40),
                     ),
                     child: const Text(
                       'Save',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
 
                 // Save & Print primary button
                 Expanded(
@@ -204,19 +204,19 @@ class InvoiceActionButtons extends StatelessWidget {
                     onPressed: isSaving ? null : onSaveAndPrint,
                     icon: isSaving
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: AppColors.deepNavy,
                             ),
                           )
                         : const Icon(Icons.print_outlined,
-                            color: AppColors.deepNavy, size: 20),
+                            color: AppColors.deepNavy, size: 18),
                     label: Text(
                       isSaving ? 'Saving...' : 'Save & Print',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppColors.deepNavy,
                       ),
@@ -225,11 +225,11 @@ class InvoiceActionButtons extends StatelessWidget {
                       backgroundColor: AppColors.brightCyan,
                       foregroundColor: AppColors.deepNavy,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      minimumSize: const Size(0, 48),
+                      minimumSize: const Size(0, 40),
                     ),
                   ),
                 ),

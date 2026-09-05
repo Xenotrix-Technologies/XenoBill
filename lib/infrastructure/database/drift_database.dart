@@ -110,7 +110,20 @@ class BusinessDao extends DatabaseAccessor<AppDriftDatabase> with _$BusinessDaoM
 /// Main Drift Database Instance for Xenobiz Local Storage.
 @DriftDatabase(tables: [BusinessTable, AccountsTable], daos: [BusinessDao])
 class AppDriftDatabase extends _$AppDriftDatabase {
-  AppDriftDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
+  static AppDriftDatabase? _instance;
+
+  factory AppDriftDatabase([QueryExecutor? executor]) {
+    if (executor != null) {
+      return AppDriftDatabase._internal(executor);
+    }
+    _instance ??= AppDriftDatabase._internal(_openConnection());
+    return _instance!;
+  }
+
+  static AppDriftDatabase get instance =>
+      _instance ??= AppDriftDatabase._internal(_openConnection());
+
+  AppDriftDatabase._internal(super.e);
 
   @override
   int get schemaVersion => 1;
