@@ -29,82 +29,83 @@ class BusinessSettingsModal extends StatelessWidget {
     final currency = biz?.currency ?? '₹';
     final isGst = biz?.gstEnabled ?? true;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.tune_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Business Settings',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
-                    ),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                   ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.category_outlined, color: AppColors.darkNavy),
-                title: const Text('Active Business Type'),
-                subtitle: Text('Current: $bType'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push(RouteConstants.businessTypeSelection);
-                },
-              ),
-              const Divider(),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.attach_money_outlined, color: AppColors.darkNavy),
-                title: const Text('Default Currency Symbol'),
-                subtitle: Text('Current: $currency (Indian Rupee)'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Default Currency set to ₹ (INR)')),
-                  );
-                },
-              ),
-              const Divider(),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.darkNavy),
-                title: const Text('GST Billing Mode'),
-                subtitle: Text(isGst ? 'Enabled (Tax invoice generation active)' : 'Disabled'),
-                value: isGst,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) {
-                  if (biz != null) {
-                    final updated = biz.copyWith(gstEnabled: v);
-                    AppDatabase.instance.currentBusiness = updated;
-                    context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
-                  }
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.tune_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Business Settings',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
+                    ),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.category_outlined, color: AppColors.darkNavy),
+                  title: const Text('Active Business Type'),
+                  subtitle: Text('Current: $bType'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(RouteConstants.businessTypeSelection);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.attach_money_outlined, color: AppColors.darkNavy),
+                  title: const Text('Default Currency Symbol'),
+                  subtitle: Text('Current: $currency (Indian Rupee)'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Default Currency set to ₹ (INR)')),
+                    );
+                  },
+                ),
+                const Divider(),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.darkNavy),
+                  title: const Text('GST Billing Mode'),
+                  subtitle: Text(isGst ? 'Enabled (Tax invoice generation active)' : 'Disabled'),
+                  value: isGst,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) {
+                    if (biz != null) {
+                      final updated = biz.copyWith(gstEnabled: v);
+                      AppDatabase.instance.currentBusiness = updated;
+                      context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
+                    }
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -133,57 +134,58 @@ class _AppThemeModalState extends State<AppThemeModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.palette_outlined, color: AppColors.darkNavy, size: 24),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'App Theme',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
-                  ),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                 ),
-                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...['System Default', 'Light Theme', 'Dark Mode'].map(
-              (theme) => RadioListTile<String>(
-                value: theme,
-                groupValue: selectedTheme,
-                title: Text(theme, style: const TextStyle(fontWeight: FontWeight.w600)),
-                activeColor: AppColors.brightCyan,
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => selectedTheme = val);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Theme set to $val')),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.palette_outlined, color: AppColors.darkNavy, size: 24),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'App Theme',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                    ),
+                  ),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...['System Default', 'Light Theme', 'Dark Mode'].map(
+                (theme) => RadioListTile<String>(
+                  value: theme,
+                  groupValue: selectedTheme,
+                  title: Text(theme, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  activeColor: AppColors.brightCyan,
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => selectedTheme = val);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Theme set to $val')),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -215,87 +217,88 @@ class _NotificationsModalState extends State<NotificationsModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.notifications_none_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Notifications & Alerts',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.notifications_none_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Notifications & Alerts',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SwitchListTile(
-                title: const Text('Invoice Notifications'),
-                subtitle: const Text('Alerts on creation and payment receipt'),
-                value: invoiceAlerts,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => invoiceAlerts = v),
-              ),
-              SwitchListTile(
-                title: const Text('Payment Reminders'),
-                subtitle: const Text('Customer due date reminders'),
-                value: paymentReminders,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => paymentReminders = v),
-              ),
-              SwitchListTile(
-                title: const Text('Due Balance Alerts'),
-                subtitle: const Text('Alerts for overdue credit accounts'),
-                value: dueReminders,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => dueReminders = v),
-              ),
-              SwitchListTile(
-                title: const Text('Business Performance Insights'),
-                subtitle: const Text('Smart sales and low stock warnings'),
-                value: businessAlerts,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => businessAlerts = v),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Notification preferences saved successfully!')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Save Preferences', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Invoice Notifications'),
+                  subtitle: const Text('Alerts on creation and payment receipt'),
+                  value: invoiceAlerts,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => invoiceAlerts = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Payment Reminders'),
+                  subtitle: const Text('Customer due date reminders'),
+                  value: paymentReminders,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => paymentReminders = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Due Balance Alerts'),
+                  subtitle: const Text('Alerts for overdue credit accounts'),
+                  value: dueReminders,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => dueReminders = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Business Performance Insights'),
+                  subtitle: const Text('Smart sales and low stock warnings'),
+                  value: businessAlerts,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => businessAlerts = v),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notification preferences saved successfully!')),
+                      );
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Save Preferences', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -320,85 +323,86 @@ class BackupRestoreModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.cloud_sync_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Backup & Restore Data',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
-                    ),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                   ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.cloud_upload_outlined, color: AppColors.brightCyan),
-                title: const Text('Create Local Data Backup'),
-                subtitle: const Text('Export JSON backup file to your device'),
-                onTap: () {
-                  final jsonStr = AppDatabase.instance.exportBackupJson();
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Backup Created Successfully'),
-                      content: SingleChildScrollView(child: Text(jsonStr)),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
-                      ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.cloud_sync_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Backup & Restore Data',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.restore, color: AppColors.darkNavy),
-                title: const Text('Restore Data from Backup'),
-                subtitle: const Text('Import JSON backup file from device'),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Select JSON backup file to restore')),
-                  );
-                },
-              ),
-              if (isDemo) ...[
-                const Divider(),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 ListTile(
-                  leading: const Icon(Icons.refresh, color: AppColors.error),
-                  title: const Text('Reset Demo Data'),
-                  subtitle: const Text('Reload pre-seeded demo records'),
+                  leading: const Icon(Icons.cloud_upload_outlined, color: AppColors.brightCyan),
+                  title: const Text('Create Local Data Backup'),
+                  subtitle: const Text('Export JSON backup file to your device'),
                   onTap: () {
-                    context.read<BusinessBloc>().add(const ToggleDemoModeEvent(true));
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Demo data reset successfully!')),
+                    final jsonStr = AppDatabase.instance.exportBackupJson();
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Backup Created Successfully'),
+                        content: SingleChildScrollView(child: Text(jsonStr)),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                        ],
+                      ),
                     );
                   },
                 ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.restore, color: AppColors.darkNavy),
+                  title: const Text('Restore Data from Backup'),
+                  subtitle: const Text('Import JSON backup file from device'),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Select JSON backup file to restore')),
+                    );
+                  },
+                ),
+                if (isDemo) ...[
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.refresh, color: AppColors.error),
+                    title: const Text('Reset Demo Data'),
+                    subtitle: const Text('Reload pre-seeded demo records'),
+                    onTap: () {
+                      context.read<BusinessBloc>().add(const ToggleDemoModeEvent(true));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Demo data reset successfully!')),
+                      );
+                    },
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -421,59 +425,60 @@ class AboutXenobizModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: const BoxDecoration(
-                  color: AppColors.darkNavy,
-                  shape: BoxShape.circle,
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                 ),
-                child: const Icon(Icons.receipt_long, color: AppColors.brightCyan, size: 36),
-              ),
-              const SizedBox(height: 12),
-              const Text('XENOBIZ POS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.darkNavy)),
-              const Text('Version 1.0.0 (Adaptive Business Engine)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const SizedBox(height: 20),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.help_outline, color: AppColors.darkNavy),
-                title: const Text('Help & Support'),
-                subtitle: const Text('Contact support or view documentation'),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: const Icon(Icons.policy_outlined, color: AppColors.darkNavy),
-                title: const Text('Privacy Policy'),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: const Icon(Icons.article_outlined, color: AppColors.darkNavy),
-                title: const Text('Terms & Conditions'),
-                onTap: () {},
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '© 2026 Xenotrix Technologies. All Rights Reserved.',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-            ],
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: const BoxDecoration(
+                    color: AppColors.darkNavy,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.receipt_long, color: AppColors.brightCyan, size: 36),
+                ),
+                const SizedBox(height: 12),
+                const Text('XENOBIZ POS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: AppColors.darkNavy)),
+                const Text('Version 1.0.0 (Adaptive Business Engine)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                const SizedBox(height: 20),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.help_outline, color: AppColors.darkNavy),
+                  title: const Text('Help & Support'),
+                  subtitle: const Text('Contact support or view documentation'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.policy_outlined, color: AppColors.darkNavy),
+                  title: const Text('Privacy Policy'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.article_outlined, color: AppColors.darkNavy),
+                  title: const Text('Terms & Conditions'),
+                  onTap: () {},
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '© 2026 Xenotrix Technologies. All Rights Reserved.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -51,103 +51,104 @@ class _InvoiceSettingsModalState extends State<InvoiceSettingsModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.description_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Invoice Display & Printing Settings',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.description_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Invoice Display & Printing Settings',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SwitchListTile(
-                title: const Text('Show GST Details on Invoice'),
-                value: showGst,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => showGst = v),
-              ),
-              SwitchListTile(
-                title: const Text('Include Business Address'),
-                value: showAddress,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => showAddress = v),
-              ),
-              SwitchListTile(
-                title: const Text('Include Phone & Contact Info'),
-                value: showPhone,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => showPhone = v),
-              ),
-              SwitchListTile(
-                title: const Text('Show Terms & Conditions'),
-                value: showTerms,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => showTerms = v),
-              ),
-              SwitchListTile(
-                title: const Text('Include Authorized Signature Line'),
-                value: showSignature,
-                activeColor: AppColors.brightCyan,
-                onChanged: (v) => setState(() => showSignature = v),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: termsController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Default Terms & Conditions / Footer Note',
-                  border: OutlineInputBorder(),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invoice display settings saved successfully!')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Save Settings', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Show GST Details on Invoice'),
+                  value: showGst,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => showGst = v),
                 ),
-              ),
-            ],
+                SwitchListTile(
+                  title: const Text('Include Business Address'),
+                  value: showAddress,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => showAddress = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Include Phone & Contact Info'),
+                  value: showPhone,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => showPhone = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Show Terms & Conditions'),
+                  value: showTerms,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => showTerms = v),
+                ),
+                SwitchListTile(
+                  title: const Text('Include Authorized Signature Line'),
+                  value: showSignature,
+                  activeThumbColor: AppColors.brightCyan,
+                  onChanged: (v) => setState(() => showSignature = v),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: termsController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Default Terms & Conditions / Footer Note',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Invoice display settings saved successfully!')),
+                      );
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Save Settings', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -196,113 +197,114 @@ class _PrefixNumberingModalState extends State<PrefixNumberingModal> {
   Widget build(BuildContext context) {
     final preview = '${prefixController.text.trim()}-${numberController.text.trim()}';
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.pin_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Invoice Prefix & Numbering',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
-                    ),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                   ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Live Preview Box
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: Column(
+                const SizedBox(height: 16),
+                Row(
                   children: [
-                    const Text('NEXT INVOICE NUMBER PREVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                    const SizedBox(height: 4),
-                    Text(
-                      preview,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.darkNavy),
+                    const Icon(Icons.pin_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Invoice Prefix & Numbering',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: prefixController,
-                decoration: const InputDecoration(
-                  labelText: 'Invoice Prefix (e.g. INV, BILL, QT)',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: numberController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Starting Invoice Number (e.g. 1001)',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final newPrefix = prefixController.text.trim();
-                    final newNum = int.tryParse(numberController.text.trim()) ?? 1001;
-                    if (widget.business != null) {
-                      final updated = widget.business!.copyWith(
-                        invoicePrefix: newPrefix,
-                        nextInvoiceNumber: newNum,
-                      );
-                      AppDatabase.instance.currentBusiness = updated;
-                      context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Invoice sequence updated to $newPrefix-$newNum')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 12),
+                // Live Preview Box
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: const Text('Update Sequence', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Column(
+                    children: [
+                      const Text('NEXT INVOICE NUMBER PREVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      const SizedBox(height: 4),
+                      Text(
+                        preview,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.darkNavy),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: prefixController,
+                  decoration: const InputDecoration(
+                    labelText: 'Invoice Prefix (e.g. INV, BILL, QT)',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: numberController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Starting Invoice Number (e.g. 1001)',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final newPrefix = prefixController.text.trim();
+                      final newNum = int.tryParse(numberController.text.trim()) ?? 1001;
+                      if (widget.business != null) {
+                        final updated = widget.business!.copyWith(
+                          invoicePrefix: newPrefix,
+                          nextInvoiceNumber: newNum,
+                        );
+                        AppDatabase.instance.currentBusiness = updated;
+                        context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Invoice sequence updated to $newPrefix-$newNum')),
+                      );
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Update Sequence', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -359,94 +361,95 @@ class _PrintingFormatsModalState extends State<PrintingFormatsModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.print_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Printing Formats',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.print_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Printing Formats',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text('Select your primary receipt and invoice printing paper size:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-              const SizedBox(height: 16),
-              ...formats.map((f) {
-                final isSelected = f['name'] == selectedFormat;
-                return RadioListTile<String>(
-                  value: f['name']!,
-                  groupValue: selectedFormat,
-                  title: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(f['name']!, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
-                      if (isSelected) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0F2FE),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFF38BDF8)),
-                          ),
-                          child: const Text(
-                            'SELECTED',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  subtitle: Text(f['desc']!),
-                  activeColor: AppColors.brightCyan,
-                  onChanged: (val) {
-                    if (val != null) setState(() => selectedFormat = val);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final current = AppDatabase.instance.invoiceDisplaySettings;
-                    AppDatabase.instance.invoiceDisplaySettings = current.copyWith(paperSize: selectedFormat);
-                    widget.onSelected?.call(selectedFormat);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Save Selection', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text('Select your primary receipt and invoice printing paper size:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                const SizedBox(height: 16),
+                ...formats.map((f) {
+                  final isSelected = f['name'] == selectedFormat;
+                  return RadioListTile<String>(
+                    value: f['name']!,
+                    groupValue: selectedFormat,
+                    title: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(f['name']!, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFF38BDF8)),
+                            ),
+                            child: const Text(
+                              'SELECTED',
+                              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    subtitle: Text(f['desc']!),
+                    activeColor: AppColors.brightCyan,
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedFormat = val);
+                    },
+                  );
+                }),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final current = AppDatabase.instance.invoiceDisplaySettings;
+                      AppDatabase.instance.invoiceDisplaySettings = current.copyWith(paperSize: selectedFormat);
+                      widget.onSelected?.call(selectedFormat);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Save Selection', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -501,94 +504,95 @@ class _InvoiceFormatModalState extends State<InvoiceFormatModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.style_outlined, color: AppColors.darkNavy, size: 24),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Invoice Format',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.style_outlined, color: AppColors.darkNavy, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Invoice Format',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text('Select your preferred invoice layout format template:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-              const SizedBox(height: 16),
-              ...formats.map((f) {
-                final isSelected = f['name'] == selectedFormat;
-                return RadioListTile<String>(
-                  value: f['name']!,
-                  groupValue: selectedFormat,
-                  title: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(f['name']!, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
-                      if (isSelected) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0F2FE),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFF38BDF8)),
-                          ),
-                          child: const Text(
-                            'SELECTED',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  subtitle: Text(f['desc']!),
-                  activeColor: AppColors.brightCyan,
-                  onChanged: (val) {
-                    if (val != null) setState(() => selectedFormat = val);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final current = AppDatabase.instance.invoiceDisplaySettings;
-                    AppDatabase.instance.invoiceDisplaySettings = current.copyWith(invoiceFormat: selectedFormat);
-                    widget.onSelected?.call(selectedFormat);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Save Selection', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text('Select your preferred invoice layout format template:', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                const SizedBox(height: 16),
+                ...formats.map((f) {
+                  final isSelected = f['name'] == selectedFormat;
+                  return RadioListTile<String>(
+                    value: f['name']!,
+                    groupValue: selectedFormat,
+                    title: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(f['name']!, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFF38BDF8)),
+                            ),
+                            child: const Text(
+                              'SELECTED',
+                              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    subtitle: Text(f['desc']!),
+                    activeColor: AppColors.brightCyan,
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedFormat = val);
+                    },
+                  );
+                }),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final current = AppDatabase.instance.invoiceDisplaySettings;
+                      AppDatabase.instance.invoiceDisplaySettings = current.copyWith(invoiceFormat: selectedFormat);
+                      widget.onSelected?.call(selectedFormat);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Save Selection', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

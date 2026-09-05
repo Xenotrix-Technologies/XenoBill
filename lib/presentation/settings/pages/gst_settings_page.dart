@@ -94,21 +94,25 @@ class _GstSettingsPageState extends State<GstSettingsPage> {
                 const SizedBox(height: 20),
 
                 // GST Enablement Switch Card
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text(
-                      'GST Registered Business',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: AppColors.darkNavy),
+                Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.antiAlias,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    subtitle: const Text('Enable GST tax calculation on sales invoices'),
-                    value: _gstEnabled,
-                    activeThumbColor: AppColors.brightCyan,
-                    onChanged: (val) => setState(() => _gstEnabled = val),
+                    child: SwitchListTile(
+                      title: const Text(
+                        'GST Registered Business',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: AppColors.darkNavy),
+                      ),
+                      subtitle: const Text('Enable GST tax calculation on sales invoices'),
+                      value: _gstEnabled,
+                      activeThumbColor: AppColors.brightCyan,
+                      onChanged: (val) => setState(() => _gstEnabled = val),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

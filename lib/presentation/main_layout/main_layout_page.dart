@@ -74,58 +74,60 @@ class MainLayoutPage extends StatelessWidget {
             body: Row(
               children: [
                 // Responsive Side Navigation for Desktop
-                Container(
-                  width: 240,
+                Material(
                   color: AppColors.deepNavy,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: AppColors.brightCyan,
-                              shape: BoxShape.circle,
+                  child: Container(
+                    width: 240,
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: AppColors.brightCyan,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.receipt_long, color: AppColors.deepNavy, size: 24),
                             ),
-                            child: const Icon(Icons.receipt_long, color: AppColors.deepNavy, size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'XENOBIZ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              letterSpacing: 1.5,
+                            const SizedBox(width: 12),
+                            const Text(
+                              'XENOBIZ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      // CTA Add Invoice
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: () => context.push(RouteConstants.addInvoice),
-                          icon: const Icon(Icons.add, color: AppColors.deepNavy, size: 24),
-                          label: Text(
-                            '+ ${business?.terminology.addInvoice.toUpperCase() ?? 'ADD INVOICE'}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.deepNavy, fontSize: 14),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brightCyan,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        // CTA Add Invoice
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: () => context.push(RouteConstants.addInvoice),
+                            icon: const Icon(Icons.add, color: AppColors.deepNavy, size: 24),
+                            label: Text(
+                              '+ ${business?.terminology.addInvoice.toUpperCase() ?? 'ADD INVOICE'}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.deepNavy, fontSize: 14),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.brightCyan,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      _buildNavTile(Icons.dashboard_outlined, Icons.dashboard, 'Home', selectedIndex == 0, () => _onItemTapped(0, context)),
-                      _buildNavTile(Icons.receipt_outlined, Icons.receipt, 'Sales', selectedIndex == 1, () => _onItemTapped(1, context)),
-                      _buildNavTile(inventoryIcon, inventoryIcon, inventoryLabel, selectedIndex == 3, () => _onItemTapped(3, context)),
-                      _buildNavTile(Icons.more_horiz_rounded, Icons.more_horiz_rounded, 'More', selectedIndex == 4, () => _onItemTapped(4, context)),
-                    ],
+                        const SizedBox(height: 32),
+                        _buildNavTile(Icons.dashboard_outlined, Icons.dashboard, 'Home', selectedIndex == 0, () => _onItemTapped(0, context)),
+                        _buildNavTile(Icons.receipt_outlined, Icons.receipt, 'Sales', selectedIndex == 1, () => _onItemTapped(1, context)),
+                        _buildNavTile(inventoryIcon, inventoryIcon, inventoryLabel, selectedIndex == 3, () => _onItemTapped(3, context)),
+                        _buildNavTile(Icons.more_horiz_rounded, Icons.more_horiz_rounded, 'More', selectedIndex == 4, () => _onItemTapped(4, context)),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(child: child),
