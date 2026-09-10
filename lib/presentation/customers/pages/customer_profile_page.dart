@@ -1,8 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/route_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -31,10 +36,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage>
   late Customer _currentCustomer;
 
   String _transactionFilter = 'All'; // 'All', 'Invoices', 'Payments', 'Expenses'
-  final List<String> _notes = [
-    'Usually pays every Friday.',
-    'Prefers invoices via email or WhatsApp.'
-  ];
+  final List<String> _notes = [];
 
   @override
   void initState() {
@@ -68,22 +70,70 @@ class _CustomerProfilePageState extends State<CustomerProfilePage>
     return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
   }
 
-  void _makePhoneCall(String phone) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling $phone...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _makePhoneCall(String phone) async {
+    final cleanPhone = phone.trim();
+    if (cleanPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No phone number provided for this customer'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final Uri uri = Uri.parse('tel:$cleanPhone');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not place call to $phone'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
-  void _openWhatsApp(String phone) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening WhatsApp for $phone...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _openWhatsApp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '').trim();
+    if (cleanPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No phone number provided for this customer'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final Uri whatsappUrl = Uri.parse('https://wa.me/$cleanPhone');
+    try {
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      } else {
+        final Uri directUrl = Uri.parse('whatsapp://send?phone=$cleanPhone');
+        if (await canLaunchUrl(directUrl)) {
+          await launchUrl(directUrl);
+        } else {
+          await launchUrl(whatsappUrl, mode: LaunchMode.externalNonBrowserApplication);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open WhatsApp for $phone'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _confirmDeleteCustomer(BuildContext context) {
@@ -1103,6 +1153,14 @@ class _CustomerProfilePageState extends State<CustomerProfilePage>
                             _notes[index],
                             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              setState(() {
+                                _notes.removeAt(index);
+                              });
+                            },
+                          ),
                         ),
                       );
                     },
@@ -1527,6 +1585,212 @@ class _CustomerProfilePageState extends State<CustomerProfilePage>
     );
   }
 
+  Future<Uint8List> _generateStatementPdf(
+    Customer customer,
+    double totalInvoiced,
+    double totalPaid,
+    double outstanding,
+    List<Invoice> invoices,
+    List<CustomerPayment> payments,
+  ) async {
+    final pdf = pw.Document();
+    final business = AppDatabase.instance.currentBusiness;
+    final businessName = business?.name ?? 'My Business';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            // Header Section
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      businessName,
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blueGrey900,
+                      ),
+                    ),
+                    if (business?.address.isNotEmpty ?? false)
+                      pw.Text(business!.address, style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                    if (business?.phone.isNotEmpty ?? false)
+                      pw.Text('Phone: ${business!.phone}', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'CUSTOMER STATEMENT',
+                      style: pw.TextStyle(
+                        fontSize: 16,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Date: ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 16),
+            pw.Divider(thickness: 1, color: PdfColors.grey300),
+            pw.SizedBox(height: 12),
+
+            // Customer Details Card
+            pw.Container(
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.grey100,
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('CUSTOMER:', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(customer.name, style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                      if (customer.phone.isNotEmpty) pw.Text('Phone: ${customer.phone}', style: const pw.TextStyle(fontSize: 9)),
+                      if (customer.email.isNotEmpty) pw.Text('Email: ${customer.email}', style: const pw.TextStyle(fontSize: 9)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text('OUTSTANDING BALANCE', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        CurrencyFormatter.format(outstanding),
+                        style: pw.TextStyle(
+                          fontSize: 15,
+                          fontWeight: pw.FontWeight.bold,
+                          color: outstanding > 0 ? PdfColors.orange900 : PdfColors.green800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // Financial Summary Boxes
+            pw.Row(
+              children: [
+                pw.Expanded(
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(color: PdfColors.blue50, borderRadius: pw.BorderRadius.circular(6)),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Total Invoiced', style: const pw.TextStyle(fontSize: 8, color: PdfColors.blueGrey700)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(CurrencyFormatter.format(totalInvoiced), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(color: PdfColors.green50, borderRadius: pw.BorderRadius.circular(6)),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Total Paid', style: const pw.TextStyle(fontSize: 8, color: PdfColors.blueGrey700)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(CurrencyFormatter.format(totalPaid), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(color: PdfColors.amber50, borderRadius: pw.BorderRadius.circular(6)),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Balance Due', style: const pw.TextStyle(fontSize: 8, color: PdfColors.blueGrey700)),
+                        pw.SizedBox(height: 4),
+                        pw.Text(CurrencyFormatter.format(outstanding), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 20),
+
+            // Invoices Table
+            if (invoices.isNotEmpty) ...[
+              pw.Text('Invoices', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey900)),
+              pw.SizedBox(height: 6),
+              pw.TableHelper.fromTextArray(
+                headers: ['Invoice #', 'Date', 'Status', 'Total', 'Due'],
+                data: invoices.map((inv) {
+                  return [
+                    '#${inv.invoiceNumber}',
+                    DateFormat('dd MMM yyyy').format(inv.invoiceDate),
+                    inv.status.name.toUpperCase(),
+                    CurrencyFormatter.format(inv.grandTotal),
+                    CurrencyFormatter.format(inv.dueAmount),
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: PdfColors.white),
+                headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
+                cellStyle: const pw.TextStyle(fontSize: 8),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+              pw.SizedBox(height: 16),
+            ],
+
+            // Payments Table
+            if (payments.isNotEmpty) ...[
+              pw.Text('Payments Received', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey900)),
+              pw.SizedBox(height: 6),
+              pw.TableHelper.fromTextArray(
+                headers: ['Date', 'Method', 'Reference / Note', 'Amount'],
+                data: payments.map((pay) {
+                  return [
+                    DateFormat('dd MMM yyyy').format(pay.paymentDate),
+                    pay.paymentMethod,
+                    pay.referenceNote.isEmpty ? '-' : pay.referenceNote,
+                    CurrencyFormatter.format(pay.amount),
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: PdfColors.white),
+                headerDecoration: const pw.BoxDecoration(color: PdfColors.teal800),
+                cellStyle: const pw.TextStyle(fontSize: 8),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+            ],
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
   void _showStatementDialog(
     BuildContext context,
     Customer customer,
@@ -1561,15 +1825,44 @@ class _CustomerProfilePageState extends State<CustomerProfilePage>
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Close'),
           ),
-          ElevatedButton.icon(
-            onPressed: () {
+          OutlinedButton.icon(
+            onPressed: () async {
               Navigator.pop(dialogCtx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Customer statement downloaded / shared successfully')),
+              final bytes = await _generateStatementPdf(
+                customer,
+                totalInvoiced,
+                totalPaid,
+                outstanding,
+                invoices,
+                payments,
+              );
+              await Printing.layoutPdf(
+                onLayout: (PdfPageFormat format) async => bytes,
+                name: 'Statement_${customer.name.replaceAll(' ', '_')}',
+              );
+            },
+            icon: const Icon(Icons.print_outlined, size: 16),
+            label: const Text('Print / Preview'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              final bytes = await _generateStatementPdf(
+                customer,
+                totalInvoiced,
+                totalPaid,
+                outstanding,
+                invoices,
+                payments,
+              );
+              final safeName = customer.name.replaceAll(RegExp(r'[^\w\s]'), '').replaceAll(' ', '_');
+              await Printing.sharePdf(
+                bytes: bytes,
+                filename: 'Statement_$safeName.pdf',
               );
             },
             icon: const Icon(Icons.share, size: 16),
-            label: const Text('Share Statement'),
+            label: const Text('Share PDF'),
           ),
         ],
       ),

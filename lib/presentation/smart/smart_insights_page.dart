@@ -9,6 +9,8 @@ import '../../core/widgets/app_card.dart';
 import '../../application/smart/smart_bloc.dart';
 import '../../domain/entities/smart_insight.dart';
 
+import '../../core/constants/route_constants.dart';
+
 class SmartInsightsPage extends StatefulWidget {
   const SmartInsightsPage({super.key});
 
@@ -29,6 +31,16 @@ class _SmartInsightsPageState extends State<SmartInsightsPage> {
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(
         title: const Text('Smart Insights & Analytics'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RouteConstants.home);
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -37,7 +37,8 @@ class MainLayoutPage extends StatelessWidget {
     if (location.startsWith('/settings') ||
         location.startsWith('/customers') ||
         location.startsWith('/expenses') ||
-        location.startsWith('/reports')) return 4;
+        location.startsWith('/reports') ||
+        location.startsWith('/smart')) return 4;
     return 0;
   }
 

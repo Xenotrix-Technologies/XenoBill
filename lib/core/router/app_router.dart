@@ -160,7 +160,7 @@ class AppRouter {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/smart',
-        builder: (context, state) => const SmartInsightsPage(),
+        builder: (context, state) => const MainLayoutPage(child: SmartInsightsPage()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
