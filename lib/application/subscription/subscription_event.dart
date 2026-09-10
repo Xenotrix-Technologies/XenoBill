@@ -1,0 +1,43 @@
+import 'package:equatable/equatable.dart';
+import '../../domain/entities/subscription_details.dart';
+import '../../domain/entities/subscription_transaction.dart';
+
+abstract class SubscriptionEvent extends Equatable {
+  const SubscriptionEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadSubscriptionEvent extends SubscriptionEvent {
+  final String userId;
+  final String? businessId;
+
+  const LoadSubscriptionEvent({required this.userId, this.businessId});
+
+  @override
+  List<Object?> get props => [userId, businessId];
+}
+
+class CheckTrialReminderEvent extends SubscriptionEvent {}
+
+class DismissTrialPopupEvent extends SubscriptionEvent {}
+
+class PurchasePlanEvent extends SubscriptionEvent {
+  final String planName; // 'Monthly Pro', 'Yearly Pro'
+  final double amount;
+  final String paymentMethod; // 'UPI', 'Credit Card', 'Netbanking'
+
+  const PurchasePlanEvent({
+    required this.planName,
+    required this.amount,
+    required this.paymentMethod,
+  });
+
+  @override
+  List<Object?> get props => [planName, amount, paymentMethod];
+}
+
+class CancelSubscriptionEvent extends SubscriptionEvent {}
+
+class StartReTrialEvent extends SubscriptionEvent {}

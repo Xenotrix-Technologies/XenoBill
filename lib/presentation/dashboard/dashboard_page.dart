@@ -15,6 +15,12 @@ import '../../application/sales/sales_bloc.dart';
 import '../../application/inventory/inventory_bloc.dart';
 import '../../application/customers/customers_bloc.dart';
 import '../../application/smart/smart_bloc.dart';
+import '../../application/subscription/subscription_bloc.dart';
+import '../../application/subscription/subscription_event.dart';
+import '../../application/subscription/subscription_state.dart';
+import '../../presentation/subscription/widgets/subscription_banner.dart';
+import '../../presentation/subscription/widgets/trial_reminder_modal.dart';
+import '../../infrastructure/database/app_database.dart';
 import '../../domain/entities/business.dart';
 import '../../domain/entities/business_type.dart';
 import '../../domain/entities/business_configuration.dart';
@@ -38,38 +44,55 @@ class _DashboardPageState extends State<DashboardPage> {
     context.read<InventoryBloc>().add(LoadInventoryEvent());
     context.read<CustomersBloc>().add(LoadCustomersEvent());
     context.read<SmartBloc>().add(LoadSmartInsightsEvent());
+
+    final activeUser = AppDatabase.instance.activeUserId ?? 'user_default';
+    context.read<SubscriptionBloc>().add(LoadSubscriptionEvent(userId: activeUser));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.lightGray,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            context.read<SalesBloc>().add(LoadSalesEvent());
-            context.read<InventoryBloc>().add(LoadInventoryEvent());
-            context.read<CustomersBloc>().add(LoadCustomersEvent());
-            context.read<SmartBloc>().add(LoadSmartInsightsEvent());
-          },
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
-            child: BlocBuilder<BusinessBloc, BusinessState>(
-              builder: (context, bizState) {
-                Business? business;
-                if (bizState is BusinessLoaded) {
-                  business = bizState.business;
-                }
-                final config = business?.configuration ?? BusinessConfiguration.fromType(business?.type ?? BusinessType.retail);
-                final terminology = config.terminology;
-                final features = config.features;
+    return BlocListener<SubscriptionBloc, SubscriptionState>(
+      listener: (context, subState) {
+        if (subState is SubscriptionLoaded && subState.showTrialPopup) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            TrialReminderModal.show(context, subState.details);
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.lightGray,
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              context.read<SalesBloc>().add(LoadSalesEvent());
+              context.read<InventoryBloc>().add(LoadInventoryEvent());
+              context.read<CustomersBloc>().add(LoadCustomersEvent());
+              context.read<SmartBloc>().add(LoadSmartInsightsEvent());
+              final activeUser = AppDatabase.instance.activeUserId ?? 'user_default';
+              context.read<SubscriptionBloc>().add(LoadSubscriptionEvent(userId: activeUser));
+            },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+              child: BlocBuilder<BusinessBloc, BusinessState>(
+                builder: (context, bizState) {
+                  Business? business;
+                  if (bizState is BusinessLoaded) {
+                    business = bizState.business;
+                  }
+                  final config = business?.configuration ?? BusinessConfiguration.fromType(business?.type ?? BusinessType.retail);
+                  final terminology = config.terminology;
+                  final features = config.features;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header Bar
-                    _buildHeader(context, business, bizState is BusinessLoaded ? bizState.isDemoMode : false),
-                    const SizedBox(height: AppSpacing.md),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Bar
+                      _buildHeader(context, business, bizState is BusinessLoaded ? bizState.isDemoMode : false),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Subscription & Trial Banner
+                      const SubscriptionBanner(),
+                      const SizedBox(height: AppSpacing.xs),
 
                     // Smart Insight Home Widget
                     if (features.smartInsightsEnabled) ...[
@@ -100,8 +123,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeader(BuildContext context, Business? business, bool isDemo) {
     return XenobizHeaderAppBar(

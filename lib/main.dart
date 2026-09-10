@@ -16,6 +16,8 @@ import 'application/sales/sales_bloc.dart';
 import 'application/reports/reports_bloc.dart';
 import 'application/expenses/expenses_bloc.dart';
 import 'application/smart/smart_bloc.dart';
+import 'application/subscription/subscription_bloc.dart';
+import 'application/subscription/subscription_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +53,10 @@ class XenobizApp extends StatelessWidget {
         BlocProvider(create: (_) => ReportsBloc(repository: invoiceRepo)..add(const LoadReportsEvent())),
         BlocProvider(create: (_) => ExpensesBloc()..add(LoadExpensesEvent())),
         BlocProvider(create: (_) => SmartBloc()..add(LoadSmartInsightsEvent())),
+        BlocProvider(create: (_) {
+          final activeUser = AppDatabase.instance.activeUserId ?? 'user_default';
+          return SubscriptionBloc()..add(LoadSubscriptionEvent(userId: activeUser));
+        }),
       ],
       child: MaterialApp.router(
         title: 'Xenobiz POS',

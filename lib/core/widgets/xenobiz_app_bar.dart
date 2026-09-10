@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/date_formatter.dart';
 import '../../domain/entities/business.dart';
+import '../../presentation/subscription/widgets/subscription_app_bar_button.dart';
 
 class XenobizHeaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Business? business;
@@ -127,6 +128,10 @@ class XenobizHeaderAppBar extends StatelessWidget implements PreferredSizeWidget
               ),
             ),
           ),
+          const SizedBox(width: 8),
+
+          // Subscription & Billing Status Button
+          const SubscriptionAppBarButton(),
         ],
       ),
     );

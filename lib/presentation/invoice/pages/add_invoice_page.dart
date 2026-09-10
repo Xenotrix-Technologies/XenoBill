@@ -6,6 +6,9 @@ import '../../../application/inventory/inventory_bloc.dart';
 import '../../../application/customers/customers_bloc.dart';
 import '../../../application/sales/sales_bloc.dart';
 import '../../../application/business/business_bloc.dart';
+import '../../../application/subscription/subscription_bloc.dart';
+import '../../../application/subscription/subscription_state.dart';
+import '../../subscription/widgets/locked_feature_dialog.dart';
 import '../../../domain/entities/business.dart';
 import '../../../domain/entities/invoice.dart';
 import '../../../infrastructure/database/app_database.dart';
@@ -287,10 +290,20 @@ class _AddInvoicePageState extends State<AddInvoicePage> {
                         grandTotal: invoiceState.grandTotal,
                         isSaving: invoiceState.isSaving,
                         onSave: () {
+                          final subState = context.read<SubscriptionBloc>().state;
+                          if (subState is SubscriptionLoaded && subState.isRestricted) {
+                            LockedFeatureDialog.show(context, 'Creating Invoices');
+                            return;
+                          }
                           setState(() => _shouldPrintAfterSave = false);
                           context.read<InvoiceBloc>().add(SaveInvoiceEvent());
                         },
                         onSaveAndPrint: () {
+                          final subState = context.read<SubscriptionBloc>().state;
+                          if (subState is SubscriptionLoaded && subState.isRestricted) {
+                            LockedFeatureDialog.show(context, 'Creating Invoices');
+                            return;
+                          }
                           setState(() => _shouldPrintAfterSave = true);
                           context.read<InvoiceBloc>().add(SaveInvoiceEvent());
                         },

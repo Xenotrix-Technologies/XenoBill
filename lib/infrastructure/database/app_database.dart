@@ -10,6 +10,8 @@ import '../../domain/entities/invoice.dart';
 import '../../domain/entities/expense.dart';
 import '../../domain/entities/smart_insight.dart';
 import '../../domain/entities/invoice_display_settings.dart';
+import '../../domain/entities/subscription_details.dart';
+import '../../domain/entities/subscription_transaction.dart';
 import '../datasources/business_local_data_source.dart';
 
 class AppDatabase {
@@ -24,6 +26,8 @@ class AppDatabase {
 
   Business? currentBusiness;
   InvoiceDisplaySettings invoiceDisplaySettings = const InvoiceDisplaySettings();
+  SubscriptionDetails? subscriptionDetails;
+  List<SubscriptionTransaction> subscriptionTransactions = [];
   List<Item> items = [];
   List<Customer> customers = [];
   List<CustomerPayment> customerPayments = [];
@@ -264,6 +268,37 @@ class AppDatabase {
       }
     } else {
       expenses = [];
+    }
+
+    // Subscription Details Cache
+    final subStr = prefs.getString('user_${userId}_subscription_json');
+    if (subStr != null) {
+      try {
+        subscriptionDetails = SubscriptionDetails.fromJson(jsonDecode(subStr));
+      } catch (_) {}
+    }
+  }
+
+  Future<void> saveSubscriptionDetails(SubscriptionDetails details) async {
+    subscriptionDetails = details;
+    if (activeUserId != null && activeUserId!.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'user_${activeUserId}_subscription_json',
+        jsonEncode(details.toJson()),
+      );
+    }
+  }
+
+  Future<void> saveSubscriptionTransactions(List<SubscriptionTransaction> transactions) async {
+    subscriptionTransactions = transactions;
+    if (activeUserId != null && activeUserId!.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final listJson = transactions.map((t) => t.toJson()).toList();
+      await prefs.setString(
+        'user_${activeUserId}_subscription_tx_json',
+        jsonEncode(listJson),
+      );
     }
   }
 

@@ -31,6 +31,7 @@ import '../../presentation/settings/pages/invoice_settings_page.dart';
 import '../../presentation/settings/pages/backup_restore_page.dart';
 import '../../presentation/expenses/expenses_page.dart';
 import '../../presentation/smart/smart_insights_page.dart';
+import '../../presentation/subscription/pages/subscription_page.dart';
 import '../../presentation/customers/pages/customer_profile_page.dart';
 
 class AppRouter {
@@ -161,6 +162,11 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/smart',
         builder: (context, state) => const MainLayoutPage(child: SmartInsightsPage()),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/subscription',
+        builder: (context, state) => const MainLayoutPage(child: SubscriptionPage()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
