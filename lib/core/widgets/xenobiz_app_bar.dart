@@ -7,12 +7,14 @@ import '../../domain/entities/business.dart';
 class XenobizHeaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Business? business;
   final bool isDemoMode;
+  final IconData icon;
   final VoidCallback? onNotificationTap;
 
   const XenobizHeaderAppBar({
     super.key,
     this.business,
     this.isDemoMode = false,
+    this.icon = Icons.auto_awesome_rounded,
     this.onNotificationTap,
   });
 
@@ -93,7 +95,7 @@ class XenobizHeaderAppBar extends StatelessWidget implements PreferredSizeWidget
             ),
           ),
 
-          // Circular Notification Bell Button
+          // Circular Action Button (Smart Insights / Analytics)
           GestureDetector(
             onTap: onNotificationTap ?? () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -118,8 +120,8 @@ class XenobizHeaderAppBar extends StatelessWidget implements PreferredSizeWidget
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
+              child: Icon(
+                icon,
                 color: AppColors.darkNavy,
                 size: 22,
               ),
