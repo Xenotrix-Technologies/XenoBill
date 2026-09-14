@@ -54,10 +54,10 @@ class TrialReminderModal extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Title
-            const Text(
-              "You're currently on a 7-day free trial",
+            Text(
+              "You're currently on a ${details.totalTrialDays}-day free trial",
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppColors.darkNavy,
@@ -78,7 +78,7 @@ class TrialReminderModal extends StatelessWidget {
                 children: [
                   _buildDetailRow('Current Plan', details.planName, isBold: true),
                   const SizedBox(height: 8),
-                  _buildDetailRow('Trial Duration', '7 Days'),
+                  _buildDetailRow('Trial Duration', '${details.totalTrialDays} Days'),
                   const SizedBox(height: 8),
                   _buildDetailRow(
                     'Remaining Days',
@@ -95,7 +95,7 @@ class TrialReminderModal extends StatelessWidget {
 
             // Explanation
             Text(
-              'Explore Xenobill with full access for 7 days. Upgrade anytime to continue using all features without interruption.',
+              'Explore Xenobill with full access for ${details.totalTrialDays} days. Upgrade anytime to continue using all features without interruption.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,

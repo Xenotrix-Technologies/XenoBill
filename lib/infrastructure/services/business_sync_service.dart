@@ -156,7 +156,11 @@ class BusinessSyncService {
           .maybeSingle();
 
       if (planRes != null) {
-        final subDetails = SubscriptionDetails.fromBusinessPlanJson(Map<String, dynamic>.from(planRes as Map));
+        final existingLastReminder = AppDatabase.instance.subscriptionDetails?.lastReminderTimestamp;
+        final subDetails = SubscriptionDetails.fromBusinessPlanJson(
+          Map<String, dynamic>.from(planRes as Map),
+          existingLastReminderTimestamp: existingLastReminder,
+        );
         AppDatabase.instance.subscriptionDetails = subDetails;
         await AppDatabase.instance.saveSubscriptionDetails(subDetails);
         debugPrint('[BusinessSyncService] Cloud business_plan loaded: ${subDetails.planName} (${subDetails.status.displayName})');

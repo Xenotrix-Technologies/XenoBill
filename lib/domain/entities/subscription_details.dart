@@ -83,6 +83,12 @@ class SubscriptionDetails extends Equatable {
     return diff < 0 ? 0 : diff + 1;
   }
 
+  /// Calculates total trial duration in days
+  int get totalTrialDays {
+    final diff = trialEndDate.difference(trialStartDate).inDays;
+    return diff <= 0 ? 30 : diff;
+  }
+
   /// Checks if 5+ hours have elapsed since last reminder modal popup dismissal
   bool get shouldShowReminderPopup {
     if (status.isRestricted) return true;
@@ -136,7 +142,7 @@ class SubscriptionDetails extends Equatable {
       status: SubscriptionStatus.trialActive,
       planName: 'Free Trial',
       trialStartDate: now,
-      trialEndDate: now.add(const Duration(days: 7)),
+      trialEndDate: now.add(const Duration(days: 30)),
       lastReminderTimestamp: null,
       lastActiveDate: now,
       trialCount: 1,
@@ -162,7 +168,10 @@ class SubscriptionDetails extends Equatable {
     };
   }
 
-  factory SubscriptionDetails.fromBusinessPlanJson(Map<String, dynamic> json) {
+  factory SubscriptionDetails.fromBusinessPlanJson(
+    Map<String, dynamic> json, {
+    DateTime? existingLastReminderTimestamp,
+  }) {
     final now = DateTime.now();
     final isDemo = json['is_demo_user'] == true || json['subscription_status'] == 'demo';
     final subStatusStr = json['subscription_status']?.toString().toLowerCase() ?? 'demo';
@@ -201,7 +210,7 @@ class SubscriptionDetails extends Equatable {
       trialEndDate: demoEnd,
       subscriptionStartDate: startDate,
       subscriptionEndDate: dueDate,
-      lastReminderTimestamp: null,
+      lastReminderTimestamp: existingLastReminderTimestamp,
       lastActiveDate: now,
       trialCount: 1,
       paymentMethod: json['gateway']?.toString() ?? json['subscription_source']?.toString() ?? 'None',
@@ -251,7 +260,7 @@ class SubscriptionDetails extends Equatable {
 
     final now = DateTime.now();
     final trialStart = parseDate(json['trial_start_date'] ?? json['start_date'] ?? json['started_at'], now);
-    final trialEnd = parseDate(json['trial_end_date'] ?? json['expiry_date'] ?? json['subscription_end_date'], now.add(const Duration(days: 7)));
+    final trialEnd = parseDate(json['trial_end_date'] ?? json['expiry_date'] ?? json['subscription_end_date'], now.add(const Duration(days: 30)));
 
     SubscriptionStatus rawStatus = parseStatus(json['status']?.toString());
     
