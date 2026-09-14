@@ -58,3 +58,76 @@ CREATE OR REPLACE TRIGGER on_accounts_updated
     BEFORE UPDATE ON public.accounts
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+
+-- 5. RPC function to check if email exists in auth.users or public.accounts
+CREATE OR REPLACE FUNCTION public.check_email_exists(p_email TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM auth.users WHERE lower(email) = lower(p_email)
+        UNION
+        SELECT 1 FROM public.accounts WHERE lower(email) = lower(p_email)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 6. Trigger for automatic account row creation from auth.users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.accounts (
+    id, 
+    user_id, 
+    owner_name,
+    email, 
+    phone, 
+    whatsapp_number,
+    business_name,
+    business_type,
+    address_line_1,
+    address_line_2,
+    status, 
+    created_at, 
+    updated_at
+  )
+  VALUES (
+    gen_random_uuid(),
+    NEW.id,
+    COALESCE(
+      NEW.raw_user_meta_data->>'owner_name',
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      NEW.raw_user_meta_data->>'username',
+      split_part(NEW.email, '@', 1)
+    ),
+    NEW.email,
+    COALESCE(NEW.phone, NEW.raw_user_meta_data->>'phone'),
+    COALESCE(NEW.raw_user_meta_data->>'whatsapp_number', NEW.phone, NEW.raw_user_meta_data->>'phone'),
+    NEW.raw_user_meta_data->>'business_name',
+    NEW.raw_user_meta_data->>'business_type',
+    NEW.raw_user_meta_data->>'address_line_1',
+    NEW.raw_user_meta_data->>'address_line_2',
+    'active',
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    owner_name = COALESCE(EXCLUDED.owner_name, accounts.owner_name),
+    phone = COALESCE(EXCLUDED.phone, accounts.phone),
+    whatsapp_number = COALESCE(EXCLUDED.whatsapp_number, accounts.whatsapp_number),
+    business_name = COALESCE(EXCLUDED.business_name, accounts.business_name),
+    business_type = COALESCE(EXCLUDED.business_type, accounts.business_type),
+    address_line_1 = COALESCE(EXCLUDED.address_line_1, accounts.address_line_1),
+    address_line_2 = COALESCE(EXCLUDED.address_line_2, accounts.address_line_2),
+    email = EXCLUDED.email,
+    updated_at = NOW();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+

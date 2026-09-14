@@ -30,38 +30,6 @@ class BusinessTerminology extends Equatable {
 
   factory BusinessTerminology.fromBusinessType(BusinessType type) {
     switch (type) {
-      case BusinessType.restaurant:
-      case BusinessType.cafe:
-      case BusinessType.bakery:
-        return const BusinessTerminology(
-          item: 'Item',
-          items: 'Menu Items',
-          addItem: 'Add Item',
-          customer: 'Customer',
-          customers: 'Customers',
-          addCustomer: 'Add Customer',
-          invoice: 'Order',
-          invoices: 'Orders',
-          addInvoice: 'New Order',
-          inventory: 'Menu',
-          shopSectionTitle: 'Menu',
-        );
-
-      case BusinessType.hotel:
-        return const BusinessTerminology(
-          item: 'Charge',
-          items: 'Rooms & Services',
-          addItem: 'Add Charge',
-          customer: 'Guest',
-          customers: 'Guests',
-          addCustomer: 'Add Guest',
-          invoice: 'Bill',
-          invoices: 'Bills',
-          addInvoice: 'New Booking',
-          inventory: 'Rooms',
-          shopSectionTitle: 'Hotel',
-        );
-
       case BusinessType.salon:
       case BusinessType.beauty:
       case BusinessType.spa:
@@ -100,6 +68,8 @@ class BusinessTerminology extends Equatable {
       case BusinessType.retail:
       case BusinessType.wholesale:
       case BusinessType.supermarket:
+      case BusinessType.pharmacy:
+      case BusinessType.textiles:
       case BusinessType.mixed:
       case BusinessType.other:
         return const BusinessTerminology(

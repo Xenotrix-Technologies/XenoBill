@@ -22,10 +22,12 @@ class BusinessConfiguration extends Equatable {
     );
   }
 
-  bool get isRetail => type == BusinessType.retail || type == BusinessType.supermarket || type == BusinessType.wholesale;
+  bool get isRetail => type == BusinessType.retail || type == BusinessType.supermarket || type == BusinessType.wholesale || type == BusinessType.pharmacy || type == BusinessType.textiles;
   bool get isService => type == BusinessType.service || type == BusinessType.freelancer || type == BusinessType.professionalService || type == BusinessType.salon || type == BusinessType.beauty || type == BusinessType.spa;
-  bool get isRestaurant => type == BusinessType.restaurant || type == BusinessType.cafe || type == BusinessType.bakery;
-  bool get isHotel => type == BusinessType.hotel;
+  bool get isPharmacy => type == BusinessType.pharmacy;
+  bool get isTextiles => type == BusinessType.textiles;
+  bool get isRestaurant => false;
+  bool get isHotel => false;
   bool get isMixed => type == BusinessType.mixed || type == BusinessType.repair;
   bool get isOther => type == BusinessType.other;
 

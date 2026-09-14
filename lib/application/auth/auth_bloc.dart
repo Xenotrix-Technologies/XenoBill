@@ -134,6 +134,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
         name: event.name,
+        phone: event.phone,
+        whatsappNumber: event.whatsappNumber,
+        businessName: event.businessName,
+        businessType: event.businessType,
+        addressLine1: event.addressLine1,
+        addressLine2: event.addressLine2,
       );
 
       if (user != null) {

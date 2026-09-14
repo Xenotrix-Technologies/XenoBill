@@ -36,32 +36,33 @@ void main() {
       expect(terminology.shopSectionTitle, equals('Business'));
     });
 
-    test('Hotel business type provides room and guest management features', () {
-      const type = BusinessType.hotel;
+    test('Pharmacy business type provides correct feature defaults and terminology', () {
+      const type = BusinessType.pharmacy;
       final features = type.defaultFeatures;
       final terminology = type.defaultTerminology;
 
-      expect(features.hotelEnabled, isTrue);
-      expect(features.roomsEnabled, isTrue);
-      expect(features.guestManagementEnabled, isTrue);
-      expect(features.productsEnabled, isFalse);
+      expect(features.productsEnabled, isTrue);
+      expect(features.inventoryEnabled, isTrue);
+      expect(features.stockTrackingEnabled, isTrue);
+      expect(features.barcodeEnabled, isTrue);
 
-      expect(terminology.customer, equals('Guest'));
-      expect(terminology.shopSectionTitle, equals('Hotel'));
+      expect(terminology.item, equals('Product'));
+      expect(terminology.items, equals('Products'));
+      expect(terminology.shopSectionTitle, equals('Shop'));
     });
 
-    test('Restaurant business type enables restaurant mode', () {
-      const type = BusinessType.restaurant;
+    test('Textiles business type provides retail feature defaults and terminology', () {
+      const type = BusinessType.textiles;
       final features = type.defaultFeatures;
       final terminology = type.defaultTerminology;
 
-      expect(features.restaurantEnabled, isTrue);
       expect(features.productsEnabled, isTrue);
-      expect(features.inventoryEnabled, isFalse);
+      expect(features.inventoryEnabled, isTrue);
+      expect(features.stockTrackingEnabled, isTrue);
 
-      expect(terminology.item, equals('Item'));
-      expect(terminology.invoice, equals('Order'));
-      expect(terminology.shopSectionTitle, equals('Menu'));
+      expect(terminology.item, equals('Product'));
+      expect(terminology.invoice, equals('Invoice'));
+      expect(terminology.shopSectionTitle, equals('Shop'));
     });
 
     test('Business entity encapsulates configuration properly', () {

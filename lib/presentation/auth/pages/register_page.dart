@@ -13,6 +13,7 @@ import '../../../application/auth/auth_bloc.dart';
 import '../../../application/auth/auth_event.dart';
 import '../../../application/auth/auth_state.dart';
 import '../../../application/business/business_bloc.dart';
+import '../../../infrastructure/authentication/auth_repository.dart';
 import 'package:uuid/uuid.dart';
 import '../../../infrastructure/database/app_database.dart';
 
@@ -25,6 +26,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   int _currentStep = 0; // 0: Business Type, 1: Create Account, 2: Business Details, 3: App Config
+  bool _isCheckingEmail = false;
+  String? _emailErrorMessage;
 
   // Form Keys
   final _step1Key = GlobalKey<FormState>();
@@ -42,8 +45,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // Step 3 Controllers: Business Details
   final _bizNameController = TextEditingController();
-  final _bizPhoneController = TextEditingController();
-  final _bizAddressController = TextEditingController();
+  final _whatsappController = TextEditingController();
+  final _addressLine1Controller = TextEditingController();
+  final _addressLine2Controller = TextEditingController();
   final _gstinController = TextEditingController();
   bool _gstEnabled = true;
 
@@ -56,9 +60,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final List<BusinessType> _availableTypes = [
     BusinessType.retail,
     BusinessType.wholesale,
-    BusinessType.restaurant,
-    BusinessType.cafe,
-    BusinessType.hotel,
+    BusinessType.pharmacy,
+    BusinessType.textiles,
     BusinessType.salon,
     BusinessType.service,
     BusinessType.mixed,
@@ -73,17 +76,57 @@ class _RegisterPageState extends State<RegisterPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _bizNameController.dispose();
-    _bizPhoneController.dispose();
-    _bizAddressController.dispose();
+    _whatsappController.dispose();
+    _addressLine1Controller.dispose();
+    _addressLine2Controller.dispose();
     _gstinController.dispose();
     _prefixController.dispose();
     _startNumController.dispose();
     super.dispose();
   }
 
-  void _nextStep() {
+  Future<void> _nextStep() async {
+    if (_isCheckingEmail) return;
+
     if (_currentStep == 1) {
       if (!_step1Key.currentState!.validate()) return;
+
+      final email = _emailController.text.trim();
+      setState(() {
+        _isCheckingEmail = true;
+        _emailErrorMessage = null;
+      });
+
+      bool isRegistered = false;
+      try {
+        isRegistered = await AuthRepositoryImpl().isEmailRegistered(email);
+      } catch (e) {
+        debugPrint('[RegisterPage] Error checking email: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          _isCheckingEmail = false;
+        });
+      }
+
+      if (isRegistered) {
+        if (mounted) {
+          setState(() {
+            _emailErrorMessage = 'Email is already registered. Please sign in or use a different email.';
+          });
+          _step1Key.currentState!.validate();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Email address is already registered. Please sign in or use a different email.'),
+              backgroundColor: AppColors.error,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return; // BLOCK forwarding to next step
+      }
     } else if (_currentStep == 2) {
       if (!_step3Key.currentState!.validate()) return;
     }
@@ -91,6 +134,9 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_currentStep < 3) {
       setState(() {
         _currentStep++;
+        if (_currentStep == 2 && _whatsappController.text.isEmpty) {
+          _whatsappController.text = _phoneController.text.trim();
+        }
       });
     } else {
       _completeRegistration();
@@ -117,8 +163,12 @@ class _RegisterPageState extends State<RegisterPage> {
         ? '${name.isEmpty ? "My" : name}\'s Shop'
         : _bizNameController.text.trim();
 
-    final phoneNum = _bizPhoneController.text.trim().isEmpty ? _phoneController.text.trim() : _bizPhoneController.text.trim();
-    final whatsappNum = _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : phoneNum;
+    final phoneNum = _phoneController.text.trim();
+    final whatsappNum = _whatsappController.text.trim().isNotEmpty
+        ? _whatsappController.text.trim()
+        : phoneNum;
+    final address1 = _addressLine1Controller.text.trim();
+    final address2 = _addressLine2Controller.text.trim();
 
     final newBiz = Business(
       id: const Uuid().v4(),
@@ -127,7 +177,8 @@ class _RegisterPageState extends State<RegisterPage> {
       businessType: _selectedType,
       phone: phoneNum,
       whatsappNumber: whatsappNum,
-      addressLine1: _bizAddressController.text.trim(),
+      addressLine1: address1,
+      addressLine2: address2,
       email: email,
       gstEnabled: _gstEnabled,
       gstin: _gstEnabled ? _gstinController.text.trim() : '',
@@ -146,6 +197,12 @@ class _RegisterPageState extends State<RegisterPage> {
             email: email.contains('@') ? email : '$email@xenobiz.internal',
             password: password,
             name: name,
+            phone: phoneNum,
+            whatsappNumber: whatsappNum,
+            businessName: bizName,
+            businessType: _selectedType.name,
+            addressLine1: address1,
+            addressLine2: address2,
           ),
         );
   }
@@ -277,9 +334,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: AppButton(
                           text: isLoading
                               ? 'Saving & Launching...'
-                              : (_currentStep == 3 ? 'Complete & Start POS 🎉' : 'Next Step →'),
+                              : (_isCheckingEmail
+                                  ? 'Checking Email...'
+                                  : (_currentStep == 3 ? 'Register' : 'Next Step →')),
                           width: double.infinity,
-                          onPressed: isLoading ? null : _nextStep,
+                          onPressed: (isLoading || _isCheckingEmail) ? null : _nextStep,
                         ),
                       ),
                     ],
@@ -546,9 +605,15 @@ class _RegisterPageState extends State<RegisterPage> {
             keyboardType: TextInputType.emailAddress,
             prefixIcon: Icons.email_outlined,
             controller: _emailController,
+            onChanged: (_) {
+              if (_emailErrorMessage != null) {
+                setState(() => _emailErrorMessage = null);
+              }
+            },
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Email address is required';
               if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email address';
+              if (_emailErrorMessage != null) return _emailErrorMessage;
               return null;
             },
           ),
@@ -619,19 +684,28 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: AppSpacing.md),
 
           AppTextField(
-            label: 'Shop Contact Phone',
+            label: 'WhatsApp Number',
             hint: 'e.g. 9876543210',
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
-            controller: _bizPhoneController,
+            prefixIcon: Icons.chat_outlined,
+            controller: _whatsappController,
           ),
           const SizedBox(height: AppSpacing.md),
 
           AppTextField(
-            label: 'Shop Address',
+            label: 'Address Line 1',
             hint: 'e.g. Shop 12, Main Market Road',
             prefixIcon: Icons.location_on_outlined,
-            controller: _bizAddressController,
+            controller: _addressLine1Controller,
+            validator: (v) => v == null || v.trim().isEmpty ? 'Address Line 1 is required' : null,
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          AppTextField(
+            label: 'Address Line 2 (Optional)',
+            hint: 'e.g. Near City Center, Landmark',
+            prefixIcon: Icons.location_on_outlined,
+            controller: _addressLine2Controller,
           ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -667,7 +741,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // STEP 4 (INDEX 3): APP CONFIGURATION & PREFERENCES
   Widget _buildStep4AppConfigForm() {
-    final currencies = ['₹', '\$', '€', '£', '¥', 'AED'];
     final paperSizes = ['2 inch (58mm)', '3 inch (80mm)', 'A4 / Letter Sheet'];
 
     return Column(
@@ -676,84 +749,12 @@ class _RegisterPageState extends State<RegisterPage> {
         Text('App Configuration', style: AppTextStyles.h1),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Customize invoice prefixes, starting sequence and thermal printing',
+          'Review your shop details and customize invoice sequence and thermal printing',
           style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // Currency Selector
-        const Text('Currency Symbol', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.darkNavy)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 10,
-          children: currencies.map((curr) {
-            final isSelected = _selectedCurrency == curr;
-            return ChoiceChip(
-              label: Text(curr, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? AppColors.deepNavy : AppColors.darkNavy)),
-              selected: isSelected,
-              selectedColor: AppColors.brightCyan,
-              backgroundColor: Colors.white,
-              side: BorderSide(color: isSelected ? AppColors.brightCyan : const Color(0xFFCBD5E1)),
-              onSelected: (val) {
-                if (val) setState(() => _selectedCurrency = curr);
-              },
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-
-        // Invoice Numbering Row
-        Row(
-          children: [
-            Expanded(
-              child: AppTextField(
-                label: 'Invoice Prefix',
-                hint: 'INV',
-                prefixIcon: Icons.pin_outlined,
-                controller: _prefixController,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppTextField(
-                label: 'Starting Inv #',
-                hint: '1001',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.onetwothree_outlined,
-                controller: _startNumController,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.lg),
-
-        // Thermal Printer Paper Format
-        const Text('Receipt Printing Size', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.darkNavy)),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            children: paperSizes.map((size) {
-              return RadioListTile<String>(
-                title: Text(size, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
-                value: size,
-                groupValue: _paperSize,
-                activeColor: AppColors.brightCyan,
-                onChanged: (val) {
-                  if (val != null) setState(() => _paperSize = val);
-                },
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-
-        // Registration Summary Card
+        // 1. FIRST CARD: Registration Summary Card
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -789,6 +790,58 @@ class _RegisterPageState extends State<RegisterPage> {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // 2. NEXT CARD: Invoice Numbering Row
+        Row(
+          children: [
+            Expanded(
+              child: AppTextField(
+                label: 'Invoice Prefix',
+                hint: 'INV',
+                prefixIcon: Icons.pin_outlined,
+                controller: _prefixController,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: AppTextField(
+                label: 'Starting Inv #',
+                hint: '1001',
+                keyboardType: TextInputType.number,
+                prefixIcon: Icons.onetwothree_outlined,
+                controller: _startNumController,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // 3. NEXT CARD: Thermal Printer Paper Format
+        const Text('Receipt Printing Size', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.darkNavy)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: paperSizes.map((size) {
+              return RadioListTile<String>(
+                title: Text(size, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                value: size,
+                groupValue: _paperSize,
+                activeColor: AppColors.brightCyan,
+                onChanged: (val) {
+                  if (val != null) setState(() => _paperSize = val);
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
       ],
     );
   }

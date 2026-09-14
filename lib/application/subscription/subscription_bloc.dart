@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/subscription_details.dart';
 import '../../domain/entities/subscription_transaction.dart';
 import '../../infrastructure/database/app_database.dart';
+import '../../infrastructure/supabase/supabase_client.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
@@ -109,6 +110,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
       await AppDatabase.instance.saveSubscriptionTransactions(updatedTransactions);
+
+      try {
+        final client = SupabaseClientManager.instance.client;
+        final user = client.auth.currentUser;
+        if (user != null) {
+          final planPayload = updatedDetails.toBusinessPlanJson(
+            companyName: AppDatabase.instance.currentBusiness?.name,
+          );
+          planPayload['current_plan_price'] = event.amount;
+          planPayload['billing_cycle'] = isYearly ? 'yearly' : 'monthly';
+          planPayload['gateway'] = event.paymentMethod;
+
+          await client.from('business_plans').upsert(planPayload, onConflict: 'user_id');
+        }
+      } catch (_) {}
 
       emit(SubscriptionLoaded(
         details: updatedDetails,

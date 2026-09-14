@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+import 'package:xenobill_flutter/infrastructure/supabase/supabase_client.dart';
 import '../supabase/supabase_auth_service.dart';
 import 'auth_service.dart';
 
@@ -20,7 +21,15 @@ abstract class AuthRepository {
     required String email,
     required String password,
     String? name,
+    String? phone,
+    String? whatsappNumber,
+    String? businessName,
+    String? businessType,
+    String? addressLine1,
+    String? addressLine2,
   });
+
+  Future<bool> isEmailRegistered(String email);
 
   Future<void> resetPassword(String email);
   Future<void> signOut();
@@ -90,12 +99,42 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     String? name,
+    String? phone,
+    String? whatsappNumber,
+    String? businessName,
+    String? businessType,
+    String? addressLine1,
+    String? addressLine2,
   }) async {
     try {
+      final metaData = <String, dynamic>{};
+      if (name != null && name.trim().isNotEmpty) {
+        metaData['full_name'] = name.trim();
+        metaData['owner_name'] = name.trim();
+      }
+      if (phone != null && phone.trim().isNotEmpty) {
+        metaData['phone'] = phone.trim();
+      }
+      if (whatsappNumber != null && whatsappNumber.trim().isNotEmpty) {
+        metaData['whatsapp_number'] = whatsappNumber.trim();
+      }
+      if (businessName != null && businessName.trim().isNotEmpty) {
+        metaData['business_name'] = businessName.trim();
+      }
+      if (businessType != null && businessType.trim().isNotEmpty) {
+        metaData['business_type'] = businessType.trim();
+      }
+      if (addressLine1 != null && addressLine1.trim().isNotEmpty) {
+        metaData['address_line_1'] = addressLine1.trim();
+      }
+      if (addressLine2 != null && addressLine2.trim().isNotEmpty) {
+        metaData['address_line_2'] = addressLine2.trim();
+      }
+
       final response = await _authService.signUp(
         email: email.trim(),
         password: password,
-        data: name != null ? {'full_name': name} : null,
+        data: metaData.isNotEmpty ? metaData : null,
       );
 
       final user = response.user;
@@ -125,6 +164,31 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e is AuthFailure) rethrow;
       debugPrint('[AuthRepository] Unexpected SignUp Error: $e');
       throw const UnknownAuthFailure();
+    }
+  }
+
+  @override
+  Future<bool> isEmailRegistered(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return false;
+
+    try {
+      final client = SupabaseClientManager.instance.client;
+      try {
+        final rpcRes = await client.rpc('check_email_exists', params: {'p_email': cleanEmail});
+        if (rpcRes is bool) return rpcRes;
+      } catch (_) {}
+
+      final res = await client
+          .from('accounts')
+          .select('id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+      return res != null;
+    } catch (e) {
+      debugPrint('[AuthRepository] Error checking email existence: $e');
+      return false;
     }
   }
 

@@ -32,15 +32,37 @@ class AuthRegisterRequested extends AuthEvent {
   final String email;
   final String password;
   final String name;
+  final String? phone;
+  final String? whatsappNumber;
+  final String? businessName;
+  final String? businessType;
+  final String? addressLine1;
+  final String? addressLine2;
 
   const AuthRegisterRequested({
     required this.email,
     required this.password,
     required this.name,
+    this.phone,
+    this.whatsappNumber,
+    this.businessName,
+    this.businessType,
+    this.addressLine1,
+    this.addressLine2,
   });
 
   @override
-  List<Object?> get props => [email, password, name];
+  List<Object?> get props => [
+        email,
+        password,
+        name,
+        phone,
+        whatsappNumber,
+        businessName,
+        businessType,
+        addressLine1,
+        addressLine2,
+      ];
 }
 
 /// Dispatched when user requests password reset.

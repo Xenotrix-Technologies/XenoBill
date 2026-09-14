@@ -36,20 +36,12 @@ void main() {
       name: 'Xenobiz Retail Store',
       businessType: BusinessType.retail,
       phone: '9876543210',
-      alternatePhone: '9876543211',
+      whatsappNumber: '9876543211',
       email: 'owner@xenobiz.com',
-      address: '123 Tech Street',
-      city: 'Bengaluru',
-      state: 'Karnataka',
-      country: 'India',
-      pinCode: '560001',
-      gstRegistrationType: 'Regular',
+      addressLine1: '123 Tech Street',
+      addressLine2: 'Bengaluru',
       gstEnabled: true,
       gstin: '29ABCDE1234F1Z5',
-      pan: 'ABCDE1234F',
-      currency: '₹',
-      invoicePrefix: 'XB',
-      nextInvoiceNumber: 1005,
       logoUrl: 'https://example.com/logo.png',
       createdAt: DateTime(2026, 1, 1),
       updatedAt: DateTime(2026, 9, 5),
@@ -71,7 +63,7 @@ void main() {
       expect(retrieved!.id, equals('biz_123'));
       expect(retrieved.name, equals('Xenobiz Retail Store'));
       expect(retrieved.phone, equals('9876543210'));
-      expect(retrieved.city, equals('Bengaluru'));
+      expect(retrieved.addressLine2, equals('Bengaluru'));
       expect(retrieved.gstin, equals('29ABCDE1234F1Z5'));
     });
 

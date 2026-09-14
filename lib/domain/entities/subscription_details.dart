@@ -162,6 +162,74 @@ class SubscriptionDetails extends Equatable {
     };
   }
 
+  factory SubscriptionDetails.fromBusinessPlanJson(Map<String, dynamic> json) {
+    final now = DateTime.now();
+    final isDemo = json['is_demo_user'] == true || json['subscription_status'] == 'demo';
+    final subStatusStr = json['subscription_status']?.toString().toLowerCase() ?? 'demo';
+    final demoStatusStr = json['demo_status']?.toString().toLowerCase() ?? 'active';
+
+    final demoStart = json['demo_start_at'] != null ? DateTime.tryParse(json['demo_start_at'].toString()) ?? now : now;
+    final demoEnd = json['demo_end_at'] != null ? DateTime.tryParse(json['demo_end_at'].toString()) ?? now.add(const Duration(days: 30)) : now.add(const Duration(days: 30));
+    final startDate = json['start_date'] != null ? DateTime.tryParse(json['start_date'].toString()) : null;
+    final dueDate = json['due_date'] != null ? DateTime.tryParse(json['due_date'].toString()) : null;
+
+    SubscriptionStatus computedStatus;
+    if (isDemo) {
+      if (demoStatusStr == 'expired' || now.isAfter(demoEnd)) {
+        computedStatus = SubscriptionStatus.trialExpired;
+      } else {
+        computedStatus = SubscriptionStatus.trialActive;
+      }
+    } else if (subStatusStr == 'active' || subStatusStr == 'paid') {
+      if (dueDate != null && now.isAfter(dueDate)) {
+        computedStatus = SubscriptionStatus.subscriptionExpired;
+      } else {
+        computedStatus = SubscriptionStatus.subscriptionActive;
+      }
+    } else if (subStatusStr == 'expired') {
+      computedStatus = SubscriptionStatus.subscriptionExpired;
+    } else {
+      computedStatus = SubscriptionStatus.trialActive;
+    }
+
+    return SubscriptionDetails(
+      userId: json['user_id']?.toString() ?? '',
+      businessId: json['plan_id']?.toString(),
+      status: computedStatus,
+      planName: json['plan_name']?.toString() ?? (isDemo ? 'Demo Plan' : 'Pro Plan'),
+      trialStartDate: demoStart,
+      trialEndDate: demoEnd,
+      subscriptionStartDate: startDate,
+      subscriptionEndDate: dueDate,
+      lastReminderTimestamp: null,
+      lastActiveDate: now,
+      trialCount: 1,
+      paymentMethod: json['gateway']?.toString() ?? json['subscription_source']?.toString() ?? 'None',
+      paymentStatus: json['subscription_status']?.toString() ?? 'Active',
+    );
+  }
+
+  Map<String, dynamic> toBusinessPlanJson({String? companyName}) {
+    final isDemo = status == SubscriptionStatus.demoMode || status == SubscriptionStatus.trialActive || status == SubscriptionStatus.trialExpired;
+    final isPaid = status == SubscriptionStatus.subscriptionActive;
+
+    return {
+      'user_id': userId,
+      'plan_name': planName,
+      'company_name': companyName,
+      'is_demo_user': isDemo,
+      'demo_status': status == SubscriptionStatus.trialExpired ? 'expired' : 'active',
+      'demo_start_at': trialStartDate.toIso8601String(),
+      'demo_end_at': trialEndDate.toIso8601String(),
+      'subscription_status': isPaid ? 'active' : (status == SubscriptionStatus.trialExpired ? 'expired' : 'demo'),
+      'purchase_date': subscriptionStartDate?.toIso8601String(),
+      'start_date': subscriptionStartDate?.toIso8601String() ?? trialStartDate.toIso8601String(),
+      'due_date': subscriptionEndDate?.toIso8601String() ?? trialEndDate.toIso8601String(),
+      'auto_renew': false,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+  }
+
   factory SubscriptionDetails.fromJson(Map<String, dynamic> json) {
     SubscriptionStatus parseStatus(String? val) {
       if (val == null) return SubscriptionStatus.trialActive;

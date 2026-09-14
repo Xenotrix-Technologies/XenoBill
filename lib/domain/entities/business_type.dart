@@ -6,10 +6,8 @@ enum BusinessType {
   retail,
   wholesale,
   supermarket,
-  restaurant,
-  cafe,
-  bakery,
-  hotel,
+  pharmacy,
+  textiles,
   salon,
   beauty,
   spa,
@@ -23,12 +21,10 @@ enum BusinessType {
   static BusinessType fromString(String? val) {
     if (val == null || val.isEmpty) return BusinessType.retail;
     final lower = val.toLowerCase();
+    if (lower.contains('pharmacy') || lower.contains('medical')) return BusinessType.pharmacy;
+    if (lower.contains('textile') || lower.contains('garment') || lower.contains('clothing') || lower.contains('apparel')) return BusinessType.textiles;
     if (lower.contains('supermarket')) return BusinessType.supermarket;
     if (lower.contains('wholesale')) return BusinessType.wholesale;
-    if (lower.contains('cafe')) return BusinessType.cafe;
-    if (lower.contains('bakery')) return BusinessType.bakery;
-    if (lower.contains('restaurant')) return BusinessType.restaurant;
-    if (lower.contains('hotel')) return BusinessType.hotel;
     if (lower.contains('salon')) return BusinessType.salon;
     if (lower.contains('beauty')) return BusinessType.beauty;
     if (lower.contains('spa')) return BusinessType.spa;
@@ -51,14 +47,10 @@ extension BusinessTypeX on BusinessType {
         return 'Wholesale';
       case BusinessType.supermarket:
         return 'Supermarket';
-      case BusinessType.restaurant:
-        return 'Restaurant';
-      case BusinessType.cafe:
-        return 'Cafe';
-      case BusinessType.bakery:
-        return 'Bakery';
-      case BusinessType.hotel:
-        return 'Hotel / Accommodation';
+      case BusinessType.pharmacy:
+        return 'Pharmacy / Medical';
+      case BusinessType.textiles:
+        return 'Textiles & Garments';
       case BusinessType.salon:
         return 'Salon / Beauty';
       case BusinessType.beauty:
@@ -88,14 +80,10 @@ extension BusinessTypeX on BusinessType {
         return 'Products, bulk sales & customer credit management';
       case BusinessType.supermarket:
         return 'Groceries, barcode scanning, stock & fast billing';
-      case BusinessType.restaurant:
-        return 'Food items, category menu, quick orders & billing';
-      case BusinessType.cafe:
-        return 'Coffee, bakery items & quick touch-screen billing';
-      case BusinessType.bakery:
-        return 'Fresh baked goods, quick sales & orders';
-      case BusinessType.hotel:
-        return 'Rooms, guests, check-in/out & stay charges';
+      case BusinessType.pharmacy:
+        return 'Medicines, batches, prescriptions & retail billing';
+      case BusinessType.textiles:
+        return 'Clothing, apparel, sizes/variants & retail billing';
       case BusinessType.salon:
         return 'Styling services, appointments, customers & billing';
       case BusinessType.beauty:
@@ -125,14 +113,10 @@ extension BusinessTypeX on BusinessType {
         return Icons.inventory_2;
       case BusinessType.supermarket:
         return Icons.shopping_cart;
-      case BusinessType.restaurant:
-        return Icons.restaurant;
-      case BusinessType.cafe:
-        return Icons.local_cafe;
-      case BusinessType.bakery:
-        return Icons.bakery_dining;
-      case BusinessType.hotel:
-        return Icons.hotel;
+      case BusinessType.pharmacy:
+        return Icons.medical_services;
+      case BusinessType.textiles:
+        return Icons.checkroom;
       case BusinessType.salon:
       case BusinessType.beauty:
       case BusinessType.spa:
@@ -155,6 +139,8 @@ extension BusinessTypeX on BusinessType {
       case BusinessType.retail:
       case BusinessType.wholesale:
       case BusinessType.supermarket:
+      case BusinessType.pharmacy:
+      case BusinessType.textiles:
         return const BusinessFeatures(
           inventoryEnabled: true,
           productsEnabled: true,
@@ -171,46 +157,6 @@ extension BusinessTypeX on BusinessType {
           guestManagementEnabled: false,
           barcodeEnabled: true,
           stockTrackingEnabled: true,
-        );
-
-      case BusinessType.restaurant:
-      case BusinessType.cafe:
-      case BusinessType.bakery:
-        return const BusinessFeatures(
-          inventoryEnabled: false,
-          productsEnabled: true,
-          servicesEnabled: false,
-          customersEnabled: true,
-          creditSalesEnabled: true,
-          gstEnabled: true,
-          expenseTrackingEnabled: true,
-          smartInsightsEnabled: true,
-          printingEnabled: true,
-          restaurantEnabled: true,
-          hotelEnabled: false,
-          roomsEnabled: false,
-          guestManagementEnabled: false,
-          barcodeEnabled: false,
-          stockTrackingEnabled: false,
-        );
-
-      case BusinessType.hotel:
-        return const BusinessFeatures(
-          inventoryEnabled: false,
-          productsEnabled: false,
-          servicesEnabled: true,
-          customersEnabled: true,
-          creditSalesEnabled: true,
-          gstEnabled: true,
-          expenseTrackingEnabled: true,
-          smartInsightsEnabled: true,
-          printingEnabled: true,
-          restaurantEnabled: false,
-          hotelEnabled: true,
-          roomsEnabled: true,
-          guestManagementEnabled: true,
-          barcodeEnabled: false,
-          stockTrackingEnabled: false,
         );
 
       case BusinessType.salon:
@@ -239,24 +185,6 @@ extension BusinessTypeX on BusinessType {
 
       case BusinessType.repair:
       case BusinessType.mixed:
-        return const BusinessFeatures(
-          inventoryEnabled: true,
-          productsEnabled: true,
-          servicesEnabled: true,
-          customersEnabled: true,
-          creditSalesEnabled: true,
-          gstEnabled: true,
-          expenseTrackingEnabled: true,
-          smartInsightsEnabled: true,
-          printingEnabled: true,
-          restaurantEnabled: false,
-          hotelEnabled: false,
-          roomsEnabled: false,
-          guestManagementEnabled: false,
-          barcodeEnabled: true,
-          stockTrackingEnabled: true,
-        );
-
       case BusinessType.other:
         return const BusinessFeatures(
           inventoryEnabled: true,

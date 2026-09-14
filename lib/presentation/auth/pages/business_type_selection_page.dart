@@ -20,9 +20,8 @@ class _BusinessTypeSelectionPageState extends State<BusinessTypeSelectionPage> {
   final List<BusinessType> _typesToDisplay = [
     BusinessType.retail,
     BusinessType.wholesale,
-    BusinessType.restaurant,
-    BusinessType.cafe,
-    BusinessType.hotel,
+    BusinessType.pharmacy,
+    BusinessType.textiles,
     BusinessType.salon,
     BusinessType.service,
     BusinessType.mixed,

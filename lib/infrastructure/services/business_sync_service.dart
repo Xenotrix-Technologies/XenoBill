@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/business.dart';
 import '../../domain/entities/business_type.dart';
+import '../../domain/entities/subscription_details.dart';
 import '../database/app_database.dart';
 import '../datasources/business_local_data_source.dart';
 import '../supabase/supabase_client.dart';
@@ -18,8 +19,10 @@ class BusinessSyncService {
     try {
       final user = SupabaseClientManager.instance.client.auth.currentUser;
       
-      // 1. If logged in via Supabase, fetch account record from cloud public.accounts table
+      // 1. If logged in via Supabase, fetch account & business_plans record from cloud
       if (user != null) {
+        await syncBusinessPlan(user.id);
+
         try {
           final res = await SupabaseClientManager.instance.client
               .from('accounts')
@@ -117,9 +120,9 @@ class BusinessSyncService {
     await AppDatabase.instance.saveLocalState();
 
     // Sync to Supabase cloud public.accounts table
-    final user = SupabaseClientManager.instance.client.auth.currentUser;
-    if (user != null) {
-      try {
+    try {
+      final user = SupabaseClientManager.instance.client.auth.currentUser;
+      if (user != null) {
         final payload = updatedBiz.copyWith(accountId: user.id).toSupabaseJson();
         await SupabaseClientManager.instance.client
             .from('accounts')
@@ -131,14 +134,65 @@ class BusinessSyncService {
           lastSyncedAt: DateTime.now(),
         );
         debugPrint('[BusinessSyncService] Successfully synced business to Supabase accounts: ${updatedBiz.id}');
-      } catch (e) {
-        debugPrint('[BusinessSyncService] Cloud sync failed (will retry on next launch): $e');
-        await _localDataSource.updateSyncStatus(
-          updatedBiz.id,
-          'pending',
-          syncError: e.toString(),
-        );
       }
+    } catch (e) {
+      debugPrint('[BusinessSyncService] Cloud sync failed or uninitialized (will retry on next launch): $e');
+      await _localDataSource.updateSyncStatus(
+        updatedBiz.id,
+        'pending',
+        syncError: e.toString(),
+      );
+    }
+  }
+
+  /// Syncs business_plans row from Supabase for current user.
+  Future<void> syncBusinessPlan(String userId) async {
+    try {
+      final client = SupabaseClientManager.instance.client;
+      final planRes = await client
+          .from('business_plans')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (planRes != null) {
+        final subDetails = SubscriptionDetails.fromBusinessPlanJson(Map<String, dynamic>.from(planRes as Map));
+        AppDatabase.instance.subscriptionDetails = subDetails;
+        await AppDatabase.instance.saveSubscriptionDetails(subDetails);
+        debugPrint('[BusinessSyncService] Cloud business_plan loaded: ${subDetails.planName} (${subDetails.status.displayName})');
+      } else {
+        // Create initial demo plan in business_plans if missing
+        final now = DateTime.now();
+        final defaultPlan = SubscriptionDetails.initialForUser(userId);
+        final initialPlanMap = {
+          'user_id': userId,
+          'plan_name': 'Demo Plan',
+          'company_name': AppDatabase.instance.currentBusiness?.name ?? '',
+          'current_plan_price': 0.00,
+          'billing_cycle': 'demo',
+          'currency': 'INR',
+          'plan_details': {},
+          'is_demo_user': true,
+          'demo_status': 'active',
+          'demo_start_at': now.toIso8601String(),
+          'demo_end_at': now.add(const Duration(days: 30)).toIso8601String(),
+          'subscription_status': 'demo',
+          'start_date': now.toIso8601String(),
+          'due_date': now.add(const Duration(days: 30)).toIso8601String(),
+          'auto_renew': false,
+          'created_at': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        };
+
+        try {
+          await client.from('business_plans').upsert(initialPlanMap, onConflict: 'user_id');
+        } catch (_) {}
+
+        AppDatabase.instance.subscriptionDetails = defaultPlan;
+        await AppDatabase.instance.saveSubscriptionDetails(defaultPlan);
+      }
+    } catch (e) {
+      debugPrint('[BusinessSyncService] Error syncing business_plan: $e');
     }
   }
 }
