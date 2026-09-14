@@ -71,7 +71,7 @@ class BusinessSettingsModal extends StatelessWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.pop(context);
-                    context.push(RouteConstants.businessTypeSelection);
+                    context.push(RouteConstants.editBusinessProfile);
                   },
                 ),
                 const Divider(),

@@ -83,21 +83,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = _authRepository.currentUser;
     final session = _authRepository.currentSession;
 
-    if (session != null && user != null) {
-      await AppDatabase.instance.setActiveUser(user.id);
-      await _ensureUserBusinessConfigured(user);
-      emit(Authenticated(user));
-    } else if (AppDatabase.instance.isLoggedIn && AppDatabase.instance.activeUserId != null) {
-      await AppDatabase.instance.loadAccountData(AppDatabase.instance.activeUserId!);
-      final authUser = AuthUser(
-        id: AppDatabase.instance.activeUserId!,
-        email: AppDatabase.instance.currentBusiness?.email ?? 'user@xenobiz.internal',
-        name: AppDatabase.instance.currentBusiness?.name ?? 'User',
-        isEmailVerified: true,
-      );
-      await _ensureUserBusinessConfigured(authUser);
-      emit(Authenticated(authUser));
+    if (AppDatabase.instance.isLoggedIn) {
+      if (session != null && user != null) {
+        await AppDatabase.instance.setActiveUser(user.id);
+        await _ensureUserBusinessConfigured(user);
+        emit(Authenticated(user));
+      } else if (AppDatabase.instance.activeUserId != null) {
+        await AppDatabase.instance.loadAccountData(AppDatabase.instance.activeUserId!);
+        final authUser = AuthUser(
+          id: AppDatabase.instance.activeUserId!,
+          email: AppDatabase.instance.currentBusiness?.email ?? 'user@xenobiz.internal',
+          name: AppDatabase.instance.currentBusiness?.name ?? 'User',
+          isEmailVerified: true,
+        );
+        await _ensureUserBusinessConfigured(authUser);
+        emit(Authenticated(authUser));
+      } else {
+        await _authRepository.signOut();
+        await AppDatabase.instance.clearActiveSessionOnLogout();
+        emit(const Unauthenticated());
+      }
     } else {
+      if (session != null) {
+        await _authRepository.signOut();
+      }
       await AppDatabase.instance.clearActiveSessionOnLogout();
       emit(const Unauthenticated());
     }
@@ -180,8 +189,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
-    await _authRepository.signOut();
     await AppDatabase.instance.clearActiveSessionOnLogout();
+    await _authRepository.signOut();
     emit(const Unauthenticated());
   }
 
@@ -197,7 +206,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       case AuthChangeEvent.tokenRefreshed:
       case AuthChangeEvent.userUpdated:
         final user = _authRepository.currentUser;
-        if (user != null) {
+        if (user != null && AppDatabase.instance.isLoggedIn) {
           await AppDatabase.instance.setActiveUser(user.id);
           await _ensureUserBusinessConfigured(user);
           emit(Authenticated(user));

@@ -119,7 +119,7 @@ class BusinessProfileModal extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    context.push(RouteConstants.businessTypeSelection);
+                    context.push(RouteConstants.editBusinessProfile);
                   },
                   icon: const Icon(Icons.swap_horiz, color: AppColors.darkNavy),
                   label: const Text('Change Business Type', style: TextStyle(color: AppColors.darkNavy)),

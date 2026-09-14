@@ -57,10 +57,13 @@ class _SettingsPageState extends State<SettingsPage> {
             child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              context.read<AuthBloc>().add(const AuthSignOutRequested());
-              context.go(RouteConstants.welcome);
+              await AppDatabase.instance.clearActiveSessionOnLogout();
+              if (context.mounted) {
+                context.read<AuthBloc>().add(const AuthSignOutRequested());
+                context.go(RouteConstants.welcome);
+              }
             },
 
             style: ElevatedButton.styleFrom(
@@ -148,7 +151,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
-                            onPressed: () => context.push(RouteConstants.businessTypeSelection),
+                            onPressed: () => context.push(RouteConstants.editBusinessProfile),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.amber.shade900,
                               foregroundColor: Colors.white,

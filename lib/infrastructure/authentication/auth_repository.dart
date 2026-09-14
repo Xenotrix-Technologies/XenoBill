@@ -5,7 +5,6 @@ import 'package:xenobill_flutter/infrastructure/supabase/supabase_client.dart';
 import '../supabase/supabase_auth_service.dart';
 import 'auth_service.dart';
 
-
 abstract class AuthRepository {
   AuthUser? get currentUser;
   Session? get currentSession;
@@ -75,9 +74,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return _mapSupabaseUserToAuthUser(user);
     } on AuthException catch (e) {
-      debugPrint('[AuthRepository] AuthException: ${e.message} (status: ${e.statusCode})');
+      debugPrint(
+          '[AuthRepository] AuthException: ${e.message} (status: ${e.statusCode})');
       final msg = e.message.toLowerCase();
-      if (msg.contains('invalid login credentials') || msg.contains('invalid credentials')) {
+      if (msg.contains('invalid login credentials') ||
+          msg.contains('invalid credentials')) {
         throw const InvalidCredentialsFailure();
       } else if (msg.contains('email not confirmed')) {
         throw const EmailNotConfirmedFailure();
@@ -146,7 +147,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e) {
       debugPrint('[AuthRepository] AuthException during signup: ${e.message}');
       final msg = e.message.toLowerCase();
-      if (msg.contains('already registered') || msg.contains('user already exists')) {
+      if (msg.contains('already registered') ||
+          msg.contains('user already exists')) {
         throw const UserAlreadyExistsFailure();
       } else if (msg.contains('password should be at least')) {
         throw const WeakPasswordFailure();
@@ -175,7 +177,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final client = SupabaseClientManager.instance.client;
       try {
-        final rpcRes = await client.rpc('check_email_exists', params: {'p_email': cleanEmail});
+        final rpcRes = await client
+            .rpc('check_email_exists', params: {'p_email': cleanEmail});
         if (rpcRes is bool) return rpcRes;
       } catch (_) {}
 
@@ -197,7 +200,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _authService.resetPasswordForEmail(email.trim());
     } on AuthException catch (e) {
-      debugPrint('[AuthRepository] AuthException during resetPassword: ${e.message}');
+      debugPrint(
+          '[AuthRepository] AuthException during resetPassword: ${e.message}');
       throw UnknownAuthFailure(e.message);
     } on SocketException {
       throw const NetworkFailure();
@@ -218,7 +222,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthUser _mapSupabaseUserToAuthUser(User user) {
     final metadata = user.userMetadata ?? {};
-    final fullName = metadata['full_name'] as String? ?? metadata['name'] as String?;
+    final fullName =
+        metadata['full_name'] as String? ?? metadata['name'] as String?;
 
     return AuthUser(
       id: user.id,

@@ -6,9 +6,6 @@ import '../constants/route_constants.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../presentation/auth/pages/welcome_page.dart';
 import '../../presentation/auth/pages/register_page.dart';
-import '../../presentation/auth/pages/login_page.dart';
-import '../../presentation/auth/pages/business_type_selection_page.dart';
-import '../../presentation/auth/pages/business_setup_page.dart';
 import '../../domain/entities/business_type.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/entities/customer.dart';
@@ -44,30 +41,19 @@ class AppRouter {
     initialLocation: RouteConstants.welcome,
     redirect: (context, state) {
       final db = AppDatabase.instance;
-      final hasSupabaseSession = Supabase.instance.client.auth.currentSession != null;
-      final isAuthenticated = db.isLoggedIn || hasSupabaseSession;
+      final isAuthenticated = db.isLoggedIn;
       if (db.currentBusiness != null) {
         db.isBusinessConfigured = true;
       }
 
       final isWelcomeRoute = state.matchedLocation == RouteConstants.welcome;
-      final isAuthRoute = state.matchedLocation == RouteConstants.login ||
-                          state.matchedLocation == RouteConstants.register ||
-                          state.matchedLocation == RouteConstants.businessTypeSelection ||
-                          state.matchedLocation == RouteConstants.businessSetup;
+      final isRegisterRoute = state.matchedLocation == RouteConstants.register;
 
-      if (!isAuthenticated && !isWelcomeRoute && !isAuthRoute) {
+      if (!isAuthenticated && !isWelcomeRoute && !isRegisterRoute) {
         return RouteConstants.welcome;
       }
 
-      if (isAuthenticated && !db.isBusinessConfigured) {
-        if (state.matchedLocation != RouteConstants.businessTypeSelection &&
-            state.matchedLocation != RouteConstants.businessSetup) {
-          return RouteConstants.businessTypeSelection;
-        }
-      }
-
-      if (isAuthenticated && db.isBusinessConfigured && (isWelcomeRoute || isAuthRoute)) {
+      if (isAuthenticated && (isWelcomeRoute || isRegisterRoute)) {
         return RouteConstants.home;
       }
 
@@ -82,21 +68,6 @@ class AppRouter {
       GoRoute(
         path: RouteConstants.register,
         builder: (context, state) => const RegisterPage(),
-      ),
-      GoRoute(
-        path: RouteConstants.login,
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: RouteConstants.businessTypeSelection,
-        builder: (context, state) => const BusinessTypeSelectionPage(),
-      ),
-      GoRoute(
-        path: RouteConstants.businessSetup,
-        builder: (context, state) {
-          final type = state.extra as BusinessType? ?? BusinessType.retail;
-          return BusinessSetupPage(selectedType: type);
-        },
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
