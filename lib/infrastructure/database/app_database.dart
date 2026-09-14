@@ -120,6 +120,7 @@ class AppDatabase {
           id: map['id'] ?? 'biz_$userId',
           accountId: userId,
           name: map['name'] ?? 'My Business',
+          ownerName: map['ownerName'],
           businessType: bType,
           phone: map['phone'] ?? '',
           address: map['address'] ?? '',
@@ -365,6 +366,7 @@ class AppDatabase {
           'id': currentBusiness!.id,
           'accountId': userId,
           'name': currentBusiness!.name,
+          'ownerName': currentBusiness!.ownerName,
           'businessType': currentBusiness!.type.name,
           'phone': currentBusiness!.phone,
           'address': currentBusiness!.address,
@@ -473,6 +475,8 @@ class AppDatabase {
   /// Clears all in-memory domain data
   void clearMemoryState() {
     currentBusiness = null;
+    subscriptionDetails = null;
+    subscriptionTransactions = [];
     items = [];
     customers = [];
     customerPayments = [];
@@ -487,6 +491,7 @@ class AppDatabase {
       'business': currentBusiness == null ? null : {
         'id': currentBusiness!.id,
         'name': currentBusiness!.name,
+        'ownerName': currentBusiness!.ownerName,
         'businessType': currentBusiness!.type.name,
         'phone': currentBusiness!.phone,
         'address': currentBusiness!.address,
@@ -552,6 +557,7 @@ class AppDatabase {
         currentBusiness = Business(
           id: bizMap['id'] ?? 'biz_real_1',
           name: bizMap['name'] ?? 'My Business',
+          ownerName: bizMap['ownerName'],
           businessType: bType,
           phone: bizMap['phone'] ?? '',
           address: bizMap['address'] ?? '',

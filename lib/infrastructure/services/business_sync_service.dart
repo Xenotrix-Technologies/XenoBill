@@ -1,158 +1,145 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/business.dart';
+import '../../domain/entities/business_type.dart';
+import '../database/app_database.dart';
 import '../datasources/business_local_data_source.dart';
-import '../datasources/business_remote_data_source.dart';
 import '../supabase/supabase_client.dart';
 
 class BusinessSyncService {
   final BusinessLocalDataSource _localDataSource;
-  final BusinessRemoteDataSource? _customRemoteDataSource;
-  final SupabaseClient? _customSupabaseClient;
 
   BusinessSyncService({
     BusinessLocalDataSource? localDataSource,
-    BusinessRemoteDataSource? remoteDataSource,
-    SupabaseClient? supabaseClient,
-  })  : _localDataSource = localDataSource ?? BusinessLocalDataSourceImpl(),
-        _customRemoteDataSource = remoteDataSource,
-        _customSupabaseClient = supabaseClient;
+  }) : _localDataSource = localDataSource ?? BusinessLocalDataSourceImpl();
 
-  BusinessRemoteDataSource get _remoteDataSource =>
-      _customRemoteDataSource ?? BusinessRemoteDataSourceImpl();
-
-  SupabaseClient get _supabaseClient =>
-      _customSupabaseClient ?? SupabaseClientManager.instance.client;
-
-  /// Runs initial synchronization on application startup.
-  ///
-  /// Safe for offline mode: if network/Supabase is unavailable,
-  /// logs error and permits UI to read existing cached Drift records.
+  /// Runs cloud fetch and local setup on application startup or login.
   Future<void> syncOnAppStart() async {
-    final user = _supabaseClient.auth.currentUser;
-    if (user == null) {
-      debugPrint('[BusinessSyncService] No authenticated user. Skipping cloud sync.');
-      return;
-    }
-
     try {
-      debugPrint('[BusinessSyncService] Starting sync for user: ${user.id}');
+      final user = SupabaseClientManager.instance.client.auth.currentUser;
       
-      // 1. Get or create Supabase Account UUID
-      final accountId = await _remoteDataSource.getOrCreateAccountId(user.id);
+      // 1. If logged in via Supabase, fetch account record from cloud public.accounts table
+      if (user != null) {
+        try {
+          final res = await SupabaseClientManager.instance.client
+              .from('accounts')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle();
 
-      // 2. Push any pending local Drift modifications first
-      await pushPendingLocalChanges(accountId);
+          if (res != null) {
+            final cloudBiz = Business.fromSupabaseJson(Map<String, dynamic>.from(res as Map));
+            
+            // Preserve local logoUrl if present in local Drift
+            final existingLocal = await _localDataSource.getCurrentBusiness(accountId: user.id);
+            final mergedBiz = cloudBiz.copyWith(
+              logoUrl: cloudBiz.logoUrl ?? existingLocal?.logoUrl,
+            );
 
-      // 3. Fetch primary business from Supabase
-      final remoteBiz = await _remoteDataSource.fetchPrimaryBusiness(accountId);
-
-      if (remoteBiz != null) {
-        final localBiz = await _localDataSource.getBusinessById(remoteBiz.id);
-
-        if (localBiz == null) {
-          // Store remote business into Drift
-          await _localDataSource.saveBusiness(
-            remoteBiz.copyWith(accountId: accountId),
-            syncStatus: 'synced',
-            lastSyncedAt: DateTime.now(),
-          );
-        } else {
-          // Conflict Resolution: compare timestamps
-          final localTime = localBiz.clientUpdatedAt ?? localBiz.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final remoteTime = remoteBiz.updatedAt ?? remoteBiz.clientUpdatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-          if (remoteTime.isAfter(localTime) && localBiz.syncStatus != 'pending') {
-            debugPrint('[BusinessSyncService] Supabase version is newer. Updating Drift.');
             await _localDataSource.saveBusiness(
-              remoteBiz.copyWith(accountId: accountId),
+              mergedBiz,
               syncStatus: 'synced',
               lastSyncedAt: DateTime.now(),
             );
-          } else if (localBiz.syncStatus == 'pending') {
-            debugPrint('[BusinessSyncService] Local version has pending changes. Uploading to Supabase.');
-            final updatedRemote = await _remoteDataSource.updateBusinessRemote(localBiz, accountId);
-            await _localDataSource.saveBusiness(
-              updatedRemote.copyWith(accountId: accountId),
-              syncStatus: 'synced',
-              lastSyncedAt: DateTime.now(),
-            );
+
+            AppDatabase.instance.currentBusiness = mergedBiz;
+            AppDatabase.instance.isBusinessConfigured = true;
+            await AppDatabase.instance.saveLocalState();
+
+            debugPrint('[BusinessSyncService] Cloud account loaded for user ${user.id}: ${mergedBiz.name}');
+            return;
           }
+        } catch (e) {
+          debugPrint('[BusinessSyncService] Cloud account fetch error: $e');
         }
       }
 
-      debugPrint('[BusinessSyncService] Sync completed successfully.');
-    } on SocketException catch (e) {
-      debugPrint('[BusinessSyncService] Device offline ($e). Using cached Drift database.');
-    } on AuthException catch (e) {
-      debugPrint('[BusinessSyncService] Auth error during sync: ${e.message}');
+      // 2. Fallback to local Drift database if offline or not in cloud yet
+      final currentBiz = await _localDataSource.getCurrentBusiness(accountId: user?.id);
+      if (currentBiz != null) {
+        AppDatabase.instance.currentBusiness = currentBiz;
+        AppDatabase.instance.isBusinessConfigured = true;
+        await AppDatabase.instance.saveLocalState();
+        return;
+      }
+
+      // 3. Create default initial business if completely new
+      final defaultName = (user != null && user.email != null && user.email!.contains('@'))
+          ? "${user.email!.split('@').first}'s Business"
+          : "My Business";
+
+      final ownerFullName = (user != null && user.userMetadata?['full_name'] is String)
+          ? user.userMetadata!['full_name'] as String
+          : ((user != null && user.email != null && user.email!.contains('@'))
+              ? user.email!.split('@').first
+              : '');
+
+      final newBiz = Business(
+        id: const Uuid().v4(),
+        accountId: user?.id,
+        name: defaultName,
+        ownerName: ownerFullName,
+        businessType: BusinessType.retail,
+        phone: '',
+        whatsappNumber: '',
+        email: user?.email ?? '',
+        addressLine1: '',
+        addressLine2: '',
+        gstEnabled: false,
+        gstin: '',
+      );
+
+      await saveLocalAndSyncCloud(newBiz);
+      debugPrint('[BusinessSyncService] Created and synced default business: ${newBiz.name}');
     } catch (e, stackTrace) {
-      debugPrint('[BusinessSyncService] Unexpected error during sync: $e');
+      debugPrint('[BusinessSyncService] Error during app start sync: $e');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
 
-  /// Pushes all locally created or modified records marked as 'pending' to Supabase.
-  Future<void> pushPendingLocalChanges(String accountId) async {
-    final pendingList = await _localDataSource.getPendingSyncBusinesses();
-    if (pendingList.isEmpty) return;
+  /// Saves a business locally into Drift database and syncs to Supabase public.accounts cloud table.
+  Future<void> saveLocalAndSyncCloud(Business business) async {
+    final now = DateTime.now();
+    final updatedBiz = business.copyWith(
+      clientUpdatedAt: now,
+      lastUsedAt: now,
+      updatedAt: now,
+    );
 
-    debugPrint('[BusinessSyncService] Found ${pendingList.length} pending local records to push.');
+    // Save locally first
+    await _localDataSource.saveBusiness(
+      updatedBiz,
+      syncStatus: 'pending',
+      lastSyncedAt: now,
+    );
+    AppDatabase.instance.currentBusiness = updatedBiz;
+    AppDatabase.instance.isBusinessConfigured = true;
+    await AppDatabase.instance.saveLocalState();
 
-    for (final localBiz in pendingList) {
+    // Sync to Supabase cloud public.accounts table
+    final user = SupabaseClientManager.instance.client.auth.currentUser;
+    if (user != null) {
       try {
-        final syncedRemote = await _remoteDataSource.updateBusinessRemote(localBiz, accountId);
-        await _localDataSource.saveBusiness(
-          syncedRemote.copyWith(accountId: accountId),
-          syncStatus: 'synced',
+        final payload = updatedBiz.copyWith(accountId: user.id).toSupabaseJson();
+        await SupabaseClientManager.instance.client
+            .from('accounts')
+            .upsert(payload, onConflict: 'user_id');
+
+        await _localDataSource.updateSyncStatus(
+          updatedBiz.id,
+          'synced',
           lastSyncedAt: DateTime.now(),
         );
+        debugPrint('[BusinessSyncService] Successfully synced business to Supabase accounts: ${updatedBiz.id}');
       } catch (e) {
-        debugPrint('[BusinessSyncService] Failed to push local business ${localBiz.id}: $e');
+        debugPrint('[BusinessSyncService] Cloud sync failed (will retry on next launch): $e');
         await _localDataSource.updateSyncStatus(
-          localBiz.id,
-          'failed',
+          updatedBiz.id,
+          'pending',
           syncError: e.toString(),
         );
       }
     }
   }
-
-  /// Saves a business locally into Drift immediately (local-first write)
-  /// and queues background sync to Supabase.
-  Future<void> saveLocalAndSyncCloud(Business business) async {
-    final now = DateTime.now();
-    final updatedBiz = business.copyWith(clientUpdatedAt: now);
-
-    // 1. Write to Drift database immediately (UI updates reactively)
-    await _localDataSource.saveBusiness(
-      updatedBiz,
-      syncStatus: 'pending',
-    );
-
-    // 2. Attempt background upload to Supabase
-    try {
-      final user = _supabaseClient.auth.currentUser;
-      if (user != null) {
-        final accountId = await _remoteDataSource.getOrCreateAccountId(user.id);
-        final syncedRemote = await _remoteDataSource.createBusinessRemote(updatedBiz, accountId);
-
-        // Update Drift record as synced
-        await _localDataSource.saveBusiness(
-          syncedRemote.copyWith(accountId: accountId),
-          syncStatus: 'synced',
-          lastSyncedAt: DateTime.now(),
-        );
-        debugPrint('[BusinessSyncService] Cloud sync completed successfully for: ${business.id}');
-      }
-    } catch (e) {
-      debugPrint('[BusinessSyncService] Cloud upload deferred/failed (offline mode): $e');
-      await _localDataSource.updateSyncStatus(
-        business.id,
-        'pending',
-        syncError: e.toString(),
-      );
-    }
-  }
 }
+

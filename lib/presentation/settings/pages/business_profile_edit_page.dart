@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
@@ -20,6 +21,7 @@ class BusinessProfileEditPage extends StatefulWidget {
 class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _ownerNameController;
   late TextEditingController _phoneController;
   late TextEditingController _altPhoneController;
   late TextEditingController _emailController;
@@ -32,6 +34,7 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
     super.initState();
     final biz = AppDatabase.instance.currentBusiness;
     _nameController = TextEditingController(text: biz?.name ?? '');
+    _ownerNameController = TextEditingController(text: biz?.ownerName ?? '');
     _phoneController = TextEditingController(text: biz?.phone ?? '');
     _altPhoneController = TextEditingController(text: '');
     _emailController = TextEditingController(text: biz?.email ?? '');
@@ -42,6 +45,7 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _ownerNameController.dispose();
     _phoneController.dispose();
     _altPhoneController.dispose();
     _emailController.dispose();
@@ -84,7 +88,7 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Update your trade name, contact information and business type',
+                  'Update your trade name, owner name, contact information and business type',
                   style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 20),
@@ -95,6 +99,14 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                   hint: 'e.g. Apex Retail Stores',
                   controller: _nameController,
                   validator: (v) => v == null || v.trim().isEmpty ? 'Business name is required' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Owner Name
+                AppTextField(
+                  label: 'Owner / Proprietor Name',
+                  hint: 'e.g. Ramesh Kumar',
+                  controller: _ownerNameController,
                 ),
                 const SizedBox(height: 16),
 
@@ -183,6 +195,7 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                     if (_formKey.currentState!.validate()) {
                       final current = AppDatabase.instance.currentBusiness;
                       final updatedName = _nameController.text.trim();
+                      final updatedOwnerName = _ownerNameController.text.trim();
                       final updatedPhone = _phoneController.text.trim();
                       final updatedEmail = _emailController.text.trim();
                       final updatedAddr = _addressController.text.trim();
@@ -190,14 +203,16 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                       final updated = (current != null)
                           ? current.copyWith(
                               name: updatedName.isEmpty ? 'My Business' : updatedName,
+                              ownerName: updatedOwnerName,
                               businessType: _selectedType,
                               phone: updatedPhone,
                               email: updatedEmail,
                               address: updatedAddr,
                             )
                           : Business(
-                              id: 'biz_real_1',
+                              id: const Uuid().v4(),
                               name: updatedName.isEmpty ? 'My Business' : updatedName,
+                              ownerName: updatedOwnerName,
                               businessType: _selectedType,
                               phone: updatedPhone,
                               email: updatedEmail,

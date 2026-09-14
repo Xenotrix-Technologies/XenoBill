@@ -117,23 +117,20 @@ class _RegisterPageState extends State<RegisterPage> {
         ? '${name.isEmpty ? "My" : name}\'s Shop'
         : _bizNameController.text.trim();
 
-    final features = _selectedType.defaultFeatures.copyWith(
-      gstEnabled: _gstEnabled,
-    );
+    final phoneNum = _bizPhoneController.text.trim().isEmpty ? _phoneController.text.trim() : _bizPhoneController.text.trim();
+    final whatsappNum = _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : phoneNum;
 
     final newBiz = Business(
       id: const Uuid().v4(),
       name: bizName,
+      ownerName: name,
       businessType: _selectedType,
-      phone: _bizPhoneController.text.trim().isEmpty ? _phoneController.text.trim() : _bizPhoneController.text.trim(),
-      address: _bizAddressController.text.trim(),
+      phone: phoneNum,
+      whatsappNumber: whatsappNum,
+      addressLine1: _bizAddressController.text.trim(),
       email: email,
       gstEnabled: _gstEnabled,
       gstin: _gstEnabled ? _gstinController.text.trim() : '',
-      currency: _selectedCurrency,
-      invoicePrefix: _prefixController.text.trim().isEmpty ? 'INV' : _prefixController.text.trim().toUpperCase(),
-      nextInvoiceNumber: int.tryParse(_startNumController.text) ?? 1001,
-      features: features,
     );
 
     // 2. Dispatch Business Bloc Update & AppDatabase

@@ -5,8 +5,8 @@ import '../entities/customer_payment.dart';
 import '../entities/invoice.dart';
 
 abstract class BusinessRepository {
-  Stream<Business?> watchCurrentBusiness();
-  Future<Business?> getCurrentBusiness();
+  Stream<Business?> watchCurrentBusiness({String? accountId});
+  Future<Business?> getCurrentBusiness({String? accountId});
   Future<Business?> getBusiness(String id);
   Future<void> saveBusiness(Business business);
   Future<void> updateBusiness(Business business);

@@ -156,7 +156,6 @@ class SubscriptionDetails extends Equatable {
       'subscription_start_date': subscriptionStartDate?.toIso8601String(),
       'subscription_end_date': subscriptionEndDate?.toIso8601String(),
       'last_reminder_timestamp': lastReminderTimestamp?.toIso8601String(),
-      'last_active_date': lastActiveDate?.toIso8601String(),
       'trial_count': trialCount,
       'payment_method': paymentMethod,
       'payment_status': paymentStatus,
@@ -183,8 +182,8 @@ class SubscriptionDetails extends Equatable {
     }
 
     final now = DateTime.now();
-    final trialStart = parseDate(json['trial_start_date'], now);
-    final trialEnd = parseDate(json['trial_end_date'], now.add(const Duration(days: 7)));
+    final trialStart = parseDate(json['trial_start_date'] ?? json['start_date'] ?? json['started_at'], now);
+    final trialEnd = parseDate(json['trial_end_date'] ?? json['expiry_date'] ?? json['subscription_end_date'], now.add(const Duration(days: 7)));
 
     SubscriptionStatus rawStatus = parseStatus(json['status']?.toString());
     

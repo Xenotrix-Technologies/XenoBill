@@ -58,16 +58,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         id: const Uuid().v4(),
         accountId: user.id,
         name: defaultName,
+        ownerName: user.name ?? '',
         businessType: BusinessType.retail,
         email: user.email,
         phone: '',
-        address: '',
+        whatsappNumber: '',
+        addressLine1: '',
+        addressLine2: '',
         gstEnabled: true,
         gstin: '',
-        currency: '₹',
-        invoicePrefix: 'INV',
-        nextInvoiceNumber: 1001,
-        features: BusinessType.retail.defaultFeatures,
       );
 
       await bizRepo.saveBusiness(defaultBiz);

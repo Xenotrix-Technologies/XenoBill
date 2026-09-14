@@ -2,17 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/subscription_details.dart';
 import '../../domain/entities/subscription_transaction.dart';
-import '../../infrastructure/datasources/subscription_remote_data_source.dart';
 import '../../infrastructure/database/app_database.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
-  final SubscriptionRemoteDataSource _remoteDataSource;
-
-  SubscriptionBloc({SubscriptionRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? SubscriptionRemoteDataSourceImpl(),
-        super(SubscriptionInitial()) {
+  SubscriptionBloc() : super(SubscriptionInitial()) {
     on<LoadSubscriptionEvent>(_onLoadSubscription);
     on<CheckTrialReminderEvent>(_onCheckTrialReminder);
     on<DismissTrialPopupEvent>(_onDismissTrialPopup);
@@ -27,28 +22,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     emit(SubscriptionLoading());
 
-    SubscriptionDetails? details;
-    List<SubscriptionTransaction> transactions = [];
-
-    // 1. Try fetching from Supabase
-    try {
-      details = await _remoteDataSource.fetchSubscriptionDetails(event.userId);
-      transactions = await _remoteDataSource.fetchTransactions(event.userId);
-    } catch (_) {}
-
-    // 2. Fallback to local AppDatabase cache or create default 7-day trial
-    if (details == null) {
-      details = AppDatabase.instance.subscriptionDetails;
-      transactions = AppDatabase.instance.subscriptionTransactions;
-    }
+    SubscriptionDetails? details = AppDatabase.instance.subscriptionDetails;
+    List<SubscriptionTransaction> transactions = AppDatabase.instance.subscriptionTransactions;
 
     if (details == null) {
-      final initial = SubscriptionDetails.initialForUser(event.userId, businessId: event.businessId);
-      try {
-        details = await _remoteDataSource.upsertSubscriptionDetails(initial);
-      } catch (_) {
-        details = initial;
-      }
+      details = SubscriptionDetails.initialForUser(event.userId, businessId: event.businessId);
     }
 
     final activeDetails = details;
@@ -89,9 +67,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
-      try {
-        await _remoteDataSource.upsertSubscriptionDetails(updatedDetails);
-      } catch (_) {}
 
       emit(current.copyWith(
         details: updatedDetails,
@@ -122,7 +97,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       final newTransaction = SubscriptionTransaction(
         id: const Uuid().v4(),
-        userId: current.details.userId,
+        businessId: AppDatabase.instance.currentBusiness?.id ?? current.details.businessId ?? current.details.userId,
         date: now,
         planName: event.planName,
         amount: event.amount,
@@ -134,11 +109,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
       await AppDatabase.instance.saveSubscriptionTransactions(updatedTransactions);
-
-      try {
-        await _remoteDataSource.upsertSubscriptionDetails(updatedDetails);
-        await _remoteDataSource.recordTransaction(newTransaction);
-      } catch (_) {}
 
       emit(SubscriptionLoaded(
         details: updatedDetails,
@@ -161,9 +131,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
-      try {
-        await _remoteDataSource.upsertSubscriptionDetails(updatedDetails);
-      } catch (_) {}
 
       emit(current.copyWith(
         details: updatedDetails,
@@ -189,9 +156,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
-      try {
-        await _remoteDataSource.upsertSubscriptionDetails(updatedDetails);
-      } catch (_) {}
 
       emit(current.copyWith(
         details: updatedDetails,

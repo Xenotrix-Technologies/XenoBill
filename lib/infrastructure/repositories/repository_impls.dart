@@ -25,8 +25,9 @@ class BusinessRepositoryImpl implements BusinessRepository {
             );
 
   @override
-  Stream<Business?> watchCurrentBusiness() {
-    return _localDataSource.watchCurrentBusiness().map((biz) {
+  Stream<Business?> watchCurrentBusiness({String? accountId}) {
+    final effectiveAccountId = accountId ?? db.currentBusiness?.accountId;
+    return _localDataSource.watchCurrentBusiness(accountId: effectiveAccountId).map((biz) {
       if (biz != null) {
         db.currentBusiness = biz;
         db.isBusinessConfigured = true;
@@ -36,8 +37,9 @@ class BusinessRepositoryImpl implements BusinessRepository {
   }
 
   @override
-  Future<Business?> getCurrentBusiness() async {
-    final biz = await _localDataSource.getCurrentBusiness();
+  Future<Business?> getCurrentBusiness({String? accountId}) async {
+    final effectiveAccountId = accountId ?? db.currentBusiness?.accountId;
+    final biz = await _localDataSource.getCurrentBusiness(accountId: effectiveAccountId);
     if (biz != null) {
       db.currentBusiness = biz;
       db.isBusinessConfigured = true;

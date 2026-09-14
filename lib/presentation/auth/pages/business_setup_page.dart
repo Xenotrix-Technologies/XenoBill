@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:xenobill_flutter/infrastructure/database/app_database.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -28,6 +29,7 @@ class BusinessSetupPage extends StatefulWidget {
 class _BusinessSetupPageState extends State<BusinessSetupPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  late TextEditingController _ownerNameController;
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _gstinController = TextEditingController();
@@ -41,9 +43,24 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
   @override
   void initState() {
     super.initState();
+    _ownerNameController = TextEditingController(
+      text: AppDatabase.instance.currentBusiness?.ownerName ?? '',
+    );
     _businessType = widget.selectedType ?? BusinessType.retail;
     _features = _businessType.defaultFeatures;
     _gstEnabled = _features.gstEnabled;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ownerNameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _gstinController.dispose();
+    _prefixController.dispose();
+    _startNumController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,7 +82,8 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Selected Type: ${_businessType.displayName}',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.brightCyan, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.brightCyan, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
@@ -73,7 +91,15 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
                   label: 'Business / Shop Name',
                   hint: 'e.g. Apex Retail, Spark Salon',
                   controller: _nameController,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                AppTextField(
+                  label: 'Owner / Proprietor Name',
+                  hint: 'e.g. Ramesh Kumar',
+                  controller: _ownerNameController,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -94,7 +120,9 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
 
                 // GST Toggle
                 SwitchListTile(
-                  title: Text('GST Registered Business', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                  title: Text('GST Registered Business',
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(fontWeight: FontWeight.bold)),
                   value: _gstEnabled,
                   activeThumbColor: AppColors.brightCyan,
                   onChanged: (val) {
@@ -141,14 +169,39 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
                   const SizedBox(height: AppSpacing.lg),
                   Text('Workspace Feature Modules', style: AppTextStyles.h2),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('Enable modules specific to your business needs', style: AppTextStyles.bodySmall),
+                  Text('Enable modules specific to your business needs',
+                      style: AppTextStyles.bodySmall),
                   const SizedBox(height: AppSpacing.sm),
-                  _buildFeatureSwitch('Products Module', _features.productsEnabled, (v) => setState(() => _features = _features.copyWith(productsEnabled: v))),
-                  _buildFeatureSwitch('Services Module', _features.servicesEnabled, (v) => setState(() => _features = _features.copyWith(servicesEnabled: v))),
-                  _buildFeatureSwitch('Stock / Inventory Tracking', _features.inventoryEnabled, (v) => setState(() => _features = _features.copyWith(inventoryEnabled: v, stockTrackingEnabled: v))),
-                  _buildFeatureSwitch('Customers & Credit Sales', _features.customersEnabled, (v) => setState(() => _features = _features.copyWith(customersEnabled: v, creditSalesEnabled: v))),
-                  _buildFeatureSwitch('Expense Tracker', _features.expenseTrackingEnabled, (v) => setState(() => _features = _features.copyWith(expenseTrackingEnabled: v))),
-                  _buildFeatureSwitch('Smart Insights', _features.smartInsightsEnabled, (v) => setState(() => _features = _features.copyWith(smartInsightsEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Products Module',
+                      _features.productsEnabled,
+                      (v) => setState(() =>
+                          _features = _features.copyWith(productsEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Services Module',
+                      _features.servicesEnabled,
+                      (v) => setState(() =>
+                          _features = _features.copyWith(servicesEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Stock / Inventory Tracking',
+                      _features.inventoryEnabled,
+                      (v) => setState(() => _features = _features.copyWith(
+                          inventoryEnabled: v, stockTrackingEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Customers & Credit Sales',
+                      _features.customersEnabled,
+                      (v) => setState(() => _features = _features.copyWith(
+                          customersEnabled: v, creditSalesEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Expense Tracker',
+                      _features.expenseTrackingEnabled,
+                      (v) => setState(() => _features =
+                          _features.copyWith(expenseTrackingEnabled: v))),
+                  _buildFeatureSwitch(
+                      'Smart Insights',
+                      _features.smartInsightsEnabled,
+                      (v) => setState(() => _features =
+                          _features.copyWith(smartInsightsEnabled: v))),
                 ],
 
                 const SizedBox(height: AppSpacing.xl),
@@ -158,21 +211,30 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       final bizName = _nameController.text.trim();
+                      final ownerName = _ownerNameController.text.trim();
                       final newBiz = Business(
                         id: const Uuid().v4(),
                         name: bizName.isEmpty ? 'My Business' : bizName,
+                        ownerName: ownerName.isEmpty
+                            ? AppDatabase.instance.currentBusiness?.ownerName
+                            : ownerName,
                         businessType: _businessType,
                         phone: _phoneController.text.trim(),
                         address: _addressController.text.trim(),
                         gstEnabled: _gstEnabled,
                         gstin: _gstEnabled ? _gstinController.text.trim() : '',
                         currency: '₹',
-                        invoicePrefix: _prefixController.text.trim().isEmpty ? 'INV' : _prefixController.text.trim().toUpperCase(),
-                        nextInvoiceNumber: int.tryParse(_startNumController.text) ?? 1001,
+                        invoicePrefix: _prefixController.text.trim().isEmpty
+                            ? 'INV'
+                            : _prefixController.text.trim().toUpperCase(),
+                        nextInvoiceNumber:
+                            int.tryParse(_startNumController.text) ?? 1001,
                         features: _features,
                       );
 
-                      context.read<BusinessBloc>().add(UpdateBusinessEvent(newBiz));
+                      context
+                          .read<BusinessBloc>()
+                          .add(UpdateBusinessEvent(newBiz));
                       context.go(RouteConstants.home);
                     }
                   },
@@ -185,7 +247,8 @@ class _BusinessSetupPageState extends State<BusinessSetupPage> {
     );
   }
 
-  Widget _buildFeatureSwitch(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildFeatureSwitch(
+      String label, bool value, ValueChanged<bool> onChanged) {
     return SwitchListTile(
       dense: true,
       title: Text(label, style: AppTextStyles.bodyMedium),

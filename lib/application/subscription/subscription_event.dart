@@ -1,6 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/subscription_details.dart';
-import '../../domain/entities/subscription_transaction.dart';
 
 abstract class SubscriptionEvent extends Equatable {
   const SubscriptionEvent();

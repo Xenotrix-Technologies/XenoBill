@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class SubscriptionTransaction extends Equatable {
   final String id;
-  final String userId;
+  final String businessId;
   final DateTime date;
   final String planName;
   final double amount;
@@ -12,7 +12,7 @@ class SubscriptionTransaction extends Equatable {
 
   const SubscriptionTransaction({
     required this.id,
-    required this.userId,
+    required this.businessId,
     required this.date,
     required this.planName,
     required this.amount,
@@ -21,10 +21,13 @@ class SubscriptionTransaction extends Equatable {
     this.invoiceId,
   });
 
+  /// Backward compatible getter
+  String get userId => businessId;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
+      'business_id': businessId,
       'date': date.toIso8601String(),
       'plan_name': planName,
       'amount': amount,
@@ -37,8 +40,8 @@ class SubscriptionTransaction extends Equatable {
   factory SubscriptionTransaction.fromJson(Map<String, dynamic> json) {
     return SubscriptionTransaction(
       id: json['id']?.toString() ?? '',
-      userId: json['user_id']?.toString() ?? '',
-      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+      businessId: json['business_id']?.toString() ?? json['user_id']?.toString() ?? '',
+      date: DateTime.tryParse(json['date']?.toString() ?? json['created_at']?.toString() ?? '') ?? DateTime.now(),
       planName: json['plan_name']?.toString() ?? 'Xenobill Pro',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'Paid',
@@ -50,7 +53,7 @@ class SubscriptionTransaction extends Equatable {
   @override
   List<Object?> get props => [
         id,
-        userId,
+        businessId,
         date,
         planName,
         amount,

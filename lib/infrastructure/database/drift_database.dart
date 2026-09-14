@@ -23,24 +23,19 @@ class BusinessTable extends Table {
   TextColumn get id => text()();
   TextColumn get accountId => text().nullable()();
   TextColumn get businessName => text()();
+  TextColumn get ownerName => text().nullable()();
   TextColumn get businessType => text().nullable()();
   TextColumn get phone => text().nullable()();
-  TextColumn get alternatePhone => text().nullable()();
+  TextColumn get whatsappNumber => text().nullable()();
   TextColumn get email => text().nullable()();
-  TextColumn get address => text().nullable()();
-  TextColumn get city => text().nullable()();
-  TextColumn get state => text().nullable()();
-  TextColumn get country => text().nullable()();
-  TextColumn get pinCode => text().nullable()();
-  TextColumn get gstRegistrationType => text().nullable()();
+  TextColumn get addressLine1 => text().nullable()();
+  TextColumn get addressLine2 => text().nullable()();
   BoolColumn get gstEnabled => boolean().withDefault(const Constant(true))();
   TextColumn get gstin => text().nullable()();
-  TextColumn get pan => text().nullable()();
-  TextColumn get currency => text().withDefault(const Constant('₹'))();
-  TextColumn get invoicePrefix => text().withDefault(const Constant('INV'))();
-  IntColumn get nextInvoiceNumber => integer().withDefault(const Constant(1001))();
+  TextColumn get status => text().withDefault(const Constant('active'))();
   TextColumn get logoUrl => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get lastUsedAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get clientUpdatedAt => dateTime().nullable()();
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))(); // 'synced', 'pending', 'failed'
@@ -64,8 +59,12 @@ class BusinessDao extends DatabaseAccessor<AppDriftDatabase> with _$BusinessDaoM
         .watchSingleOrNull();
   }
 
-  /// Reactive stream watching the first/active business record.
-  Stream<BusinessTableData?> watchCurrentBusiness() {
+  /// Reactive stream watching the active business record scoped by optional account ID.
+  Stream<BusinessTableData?> watchCurrentBusiness({String? accountId}) {
+    if (accountId != null && accountId.isNotEmpty) {
+      return (select(businessTable)..where((tbl) => tbl.accountId.equals(accountId))..limit(1))
+          .watchSingleOrNull();
+    }
     return (select(businessTable)..limit(1)).watchSingleOrNull();
   }
 
@@ -75,8 +74,12 @@ class BusinessDao extends DatabaseAccessor<AppDriftDatabase> with _$BusinessDaoM
         .getSingleOrNull();
   }
 
-  /// Reads current active business.
-  Future<BusinessTableData?> getCurrentBusiness() {
+  /// Reads current active business scoped by optional account ID.
+  Future<BusinessTableData?> getCurrentBusiness({String? accountId}) {
+    if (accountId != null && accountId.isNotEmpty) {
+      return (select(businessTable)..where((tbl) => tbl.accountId.equals(accountId))..limit(1))
+          .getSingleOrNull();
+    }
     return (select(businessTable)..limit(1)).getSingleOrNull();
   }
 
@@ -126,7 +129,16 @@ class AppDriftDatabase extends _$AppDriftDatabase {
   AppDriftDatabase._internal(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(businessTable, businessTable.ownerName);
+          }
+        },
+      );
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {

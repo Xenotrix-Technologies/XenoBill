@@ -5,9 +5,9 @@ import '../database/drift_database.dart';
 import '../mappers/business_mapper.dart';
 
 abstract class BusinessLocalDataSource {
-  Stream<Business?> watchCurrentBusiness();
+  Stream<Business?> watchCurrentBusiness({String? accountId});
   Stream<Business?> watchBusinessById(String id);
-  Future<Business?> getCurrentBusiness();
+  Future<Business?> getCurrentBusiness({String? accountId});
   Future<Business?> getBusinessById(String id);
   Future<void> saveBusiness(
     Business business, {
@@ -32,8 +32,8 @@ class BusinessLocalDataSourceImpl implements BusinessLocalDataSource {
       : _dao = dao ?? (db ?? AppDriftDatabase()).businessDao;
 
   @override
-  Stream<Business?> watchCurrentBusiness() {
-    return _dao.watchCurrentBusiness().map((row) {
+  Stream<Business?> watchCurrentBusiness({String? accountId}) {
+    return _dao.watchCurrentBusiness(accountId: accountId).map((row) {
       if (row == null) return null;
       return BusinessMapper.fromDrift(row);
     });
@@ -48,8 +48,8 @@ class BusinessLocalDataSourceImpl implements BusinessLocalDataSource {
   }
 
   @override
-  Future<Business?> getCurrentBusiness() async {
-    final row = await _dao.getCurrentBusiness();
+  Future<Business?> getCurrentBusiness({String? accountId}) async {
+    final row = await _dao.getCurrentBusiness(accountId: accountId);
     if (row == null) return null;
     return BusinessMapper.fromDrift(row);
   }

@@ -41,6 +41,12 @@ class $BusinessTableTable extends BusinessTable
   late final GeneratedColumn<String> businessName = GeneratedColumn<String>(
       'business_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ownerNameMeta =
+      const VerificationMeta('ownerName');
+  @override
+  late final GeneratedColumn<String> ownerName = GeneratedColumn<String>(
+      'owner_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _businessTypeMeta =
       const VerificationMeta('businessType');
   @override
@@ -52,51 +58,29 @@ class $BusinessTableTable extends BusinessTable
   late final GeneratedColumn<String> phone = GeneratedColumn<String>(
       'phone', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _alternatePhoneMeta =
-      const VerificationMeta('alternatePhone');
+  static const VerificationMeta _whatsappNumberMeta =
+      const VerificationMeta('whatsappNumber');
   @override
-  late final GeneratedColumn<String> alternatePhone = GeneratedColumn<String>(
-      'alternate_phone', aliasedName, true,
+  late final GeneratedColumn<String> whatsappNumber = GeneratedColumn<String>(
+      'whatsapp_number', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _emailMeta = const VerificationMeta('email');
   @override
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
       'email', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _addressMeta =
-      const VerificationMeta('address');
+  static const VerificationMeta _addressLine1Meta =
+      const VerificationMeta('addressLine1');
   @override
-  late final GeneratedColumn<String> address = GeneratedColumn<String>(
-      'address', aliasedName, true,
+  late final GeneratedColumn<String> addressLine1 = GeneratedColumn<String>(
+      'address_line1', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _cityMeta = const VerificationMeta('city');
+  static const VerificationMeta _addressLine2Meta =
+      const VerificationMeta('addressLine2');
   @override
-  late final GeneratedColumn<String> city = GeneratedColumn<String>(
-      'city', aliasedName, true,
+  late final GeneratedColumn<String> addressLine2 = GeneratedColumn<String>(
+      'address_line2', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _stateMeta = const VerificationMeta('state');
-  @override
-  late final GeneratedColumn<String> state = GeneratedColumn<String>(
-      'state', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _countryMeta =
-      const VerificationMeta('country');
-  @override
-  late final GeneratedColumn<String> country = GeneratedColumn<String>(
-      'country', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _pinCodeMeta =
-      const VerificationMeta('pinCode');
-  @override
-  late final GeneratedColumn<String> pinCode = GeneratedColumn<String>(
-      'pin_code', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _gstRegistrationTypeMeta =
-      const VerificationMeta('gstRegistrationType');
-  @override
-  late final GeneratedColumn<String> gstRegistrationType =
-      GeneratedColumn<String>('gst_registration_type', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _gstEnabledMeta =
       const VerificationMeta('gstEnabled');
   @override
@@ -112,35 +96,13 @@ class $BusinessTableTable extends BusinessTable
   late final GeneratedColumn<String> gstin = GeneratedColumn<String>(
       'gstin', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _panMeta = const VerificationMeta('pan');
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
-  late final GeneratedColumn<String> pan = GeneratedColumn<String>(
-      'pan', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _currencyMeta =
-      const VerificationMeta('currency');
-  @override
-  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
-      'currency', aliasedName, false,
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('₹'));
-  static const VerificationMeta _invoicePrefixMeta =
-      const VerificationMeta('invoicePrefix');
-  @override
-  late final GeneratedColumn<String> invoicePrefix = GeneratedColumn<String>(
-      'invoice_prefix', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('INV'));
-  static const VerificationMeta _nextInvoiceNumberMeta =
-      const VerificationMeta('nextInvoiceNumber');
-  @override
-  late final GeneratedColumn<int> nextInvoiceNumber = GeneratedColumn<int>(
-      'next_invoice_number', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1001));
+      defaultValue: const Constant('active'));
   static const VerificationMeta _logoUrlMeta =
       const VerificationMeta('logoUrl');
   @override
@@ -152,6 +114,12 @@ class $BusinessTableTable extends BusinessTable
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _lastUsedAtMeta =
+      const VerificationMeta('lastUsedAt');
+  @override
+  late final GeneratedColumn<DateTime> lastUsedAt = GeneratedColumn<DateTime>(
+      'last_used_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
@@ -190,24 +158,19 @@ class $BusinessTableTable extends BusinessTable
         id,
         accountId,
         businessName,
+        ownerName,
         businessType,
         phone,
-        alternatePhone,
+        whatsappNumber,
         email,
-        address,
-        city,
-        state,
-        country,
-        pinCode,
-        gstRegistrationType,
+        addressLine1,
+        addressLine2,
         gstEnabled,
         gstin,
-        pan,
-        currency,
-        invoicePrefix,
-        nextInvoiceNumber,
+        status,
         logoUrl,
         createdAt,
+        lastUsedAt,
         updatedAt,
         clientUpdatedAt,
         syncStatus,
@@ -241,6 +204,10 @@ class $BusinessTableTable extends BusinessTable
     } else if (isInserting) {
       context.missing(_businessNameMeta);
     }
+    if (data.containsKey('owner_name')) {
+      context.handle(_ownerNameMeta,
+          ownerName.isAcceptableOrUnknown(data['owner_name']!, _ownerNameMeta));
+    }
     if (data.containsKey('business_type')) {
       context.handle(
           _businessTypeMeta,
@@ -251,41 +218,27 @@ class $BusinessTableTable extends BusinessTable
       context.handle(
           _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
     }
-    if (data.containsKey('alternate_phone')) {
+    if (data.containsKey('whatsapp_number')) {
       context.handle(
-          _alternatePhoneMeta,
-          alternatePhone.isAcceptableOrUnknown(
-              data['alternate_phone']!, _alternatePhoneMeta));
+          _whatsappNumberMeta,
+          whatsappNumber.isAcceptableOrUnknown(
+              data['whatsapp_number']!, _whatsappNumberMeta));
     }
     if (data.containsKey('email')) {
       context.handle(
           _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
     }
-    if (data.containsKey('address')) {
-      context.handle(_addressMeta,
-          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
-    }
-    if (data.containsKey('city')) {
+    if (data.containsKey('address_line1')) {
       context.handle(
-          _cityMeta, city.isAcceptableOrUnknown(data['city']!, _cityMeta));
+          _addressLine1Meta,
+          addressLine1.isAcceptableOrUnknown(
+              data['address_line1']!, _addressLine1Meta));
     }
-    if (data.containsKey('state')) {
+    if (data.containsKey('address_line2')) {
       context.handle(
-          _stateMeta, state.isAcceptableOrUnknown(data['state']!, _stateMeta));
-    }
-    if (data.containsKey('country')) {
-      context.handle(_countryMeta,
-          country.isAcceptableOrUnknown(data['country']!, _countryMeta));
-    }
-    if (data.containsKey('pin_code')) {
-      context.handle(_pinCodeMeta,
-          pinCode.isAcceptableOrUnknown(data['pin_code']!, _pinCodeMeta));
-    }
-    if (data.containsKey('gst_registration_type')) {
-      context.handle(
-          _gstRegistrationTypeMeta,
-          gstRegistrationType.isAcceptableOrUnknown(
-              data['gst_registration_type']!, _gstRegistrationTypeMeta));
+          _addressLine2Meta,
+          addressLine2.isAcceptableOrUnknown(
+              data['address_line2']!, _addressLine2Meta));
     }
     if (data.containsKey('gst_enabled')) {
       context.handle(
@@ -297,25 +250,9 @@ class $BusinessTableTable extends BusinessTable
       context.handle(
           _gstinMeta, gstin.isAcceptableOrUnknown(data['gstin']!, _gstinMeta));
     }
-    if (data.containsKey('pan')) {
-      context.handle(
-          _panMeta, pan.isAcceptableOrUnknown(data['pan']!, _panMeta));
-    }
-    if (data.containsKey('currency')) {
-      context.handle(_currencyMeta,
-          currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta));
-    }
-    if (data.containsKey('invoice_prefix')) {
-      context.handle(
-          _invoicePrefixMeta,
-          invoicePrefix.isAcceptableOrUnknown(
-              data['invoice_prefix']!, _invoicePrefixMeta));
-    }
-    if (data.containsKey('next_invoice_number')) {
-      context.handle(
-          _nextInvoiceNumberMeta,
-          nextInvoiceNumber.isAcceptableOrUnknown(
-              data['next_invoice_number']!, _nextInvoiceNumberMeta));
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
     }
     if (data.containsKey('logo_url')) {
       context.handle(_logoUrlMeta,
@@ -324,6 +261,12 @@ class $BusinessTableTable extends BusinessTable
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('last_used_at')) {
+      context.handle(
+          _lastUsedAtMeta,
+          lastUsedAt.isAcceptableOrUnknown(
+              data['last_used_at']!, _lastUsedAtMeta));
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
@@ -366,42 +309,32 @@ class $BusinessTableTable extends BusinessTable
           .read(DriftSqlType.string, data['${effectivePrefix}account_id']),
       businessName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}business_name'])!,
+      ownerName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}owner_name']),
       businessType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}business_type']),
       phone: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}phone']),
-      alternatePhone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}alternate_phone']),
+      whatsappNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}whatsapp_number']),
       email: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}email']),
-      address: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}address']),
-      city: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}city']),
-      state: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}state']),
-      country: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}country']),
-      pinCode: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}pin_code']),
-      gstRegistrationType: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}gst_registration_type']),
+      addressLine1: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address_line1']),
+      addressLine2: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address_line2']),
       gstEnabled: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}gst_enabled'])!,
       gstin: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}gstin']),
-      pan: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}pan']),
-      currency: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}currency'])!,
-      invoicePrefix: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}invoice_prefix'])!,
-      nextInvoiceNumber: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}next_invoice_number'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       logoUrl: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}logo_url']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
+      lastUsedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_used_at']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       clientUpdatedAt: attachedDatabase.typeMapping.read(
@@ -426,24 +359,19 @@ class BusinessTableData extends DataClass
   final String id;
   final String? accountId;
   final String businessName;
+  final String? ownerName;
   final String? businessType;
   final String? phone;
-  final String? alternatePhone;
+  final String? whatsappNumber;
   final String? email;
-  final String? address;
-  final String? city;
-  final String? state;
-  final String? country;
-  final String? pinCode;
-  final String? gstRegistrationType;
+  final String? addressLine1;
+  final String? addressLine2;
   final bool gstEnabled;
   final String? gstin;
-  final String? pan;
-  final String currency;
-  final String invoicePrefix;
-  final int nextInvoiceNumber;
+  final String status;
   final String? logoUrl;
   final DateTime? createdAt;
+  final DateTime? lastUsedAt;
   final DateTime? updatedAt;
   final DateTime? clientUpdatedAt;
   final String syncStatus;
@@ -453,24 +381,19 @@ class BusinessTableData extends DataClass
       {required this.id,
       this.accountId,
       required this.businessName,
+      this.ownerName,
       this.businessType,
       this.phone,
-      this.alternatePhone,
+      this.whatsappNumber,
       this.email,
-      this.address,
-      this.city,
-      this.state,
-      this.country,
-      this.pinCode,
-      this.gstRegistrationType,
+      this.addressLine1,
+      this.addressLine2,
       required this.gstEnabled,
       this.gstin,
-      this.pan,
-      required this.currency,
-      required this.invoicePrefix,
-      required this.nextInvoiceNumber,
+      required this.status,
       this.logoUrl,
       this.createdAt,
+      this.lastUsedAt,
       this.updatedAt,
       this.clientUpdatedAt,
       required this.syncStatus,
@@ -484,51 +407,40 @@ class BusinessTableData extends DataClass
       map['account_id'] = Variable<String>(accountId);
     }
     map['business_name'] = Variable<String>(businessName);
+    if (!nullToAbsent || ownerName != null) {
+      map['owner_name'] = Variable<String>(ownerName);
+    }
     if (!nullToAbsent || businessType != null) {
       map['business_type'] = Variable<String>(businessType);
     }
     if (!nullToAbsent || phone != null) {
       map['phone'] = Variable<String>(phone);
     }
-    if (!nullToAbsent || alternatePhone != null) {
-      map['alternate_phone'] = Variable<String>(alternatePhone);
+    if (!nullToAbsent || whatsappNumber != null) {
+      map['whatsapp_number'] = Variable<String>(whatsappNumber);
     }
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
     }
-    if (!nullToAbsent || address != null) {
-      map['address'] = Variable<String>(address);
+    if (!nullToAbsent || addressLine1 != null) {
+      map['address_line1'] = Variable<String>(addressLine1);
     }
-    if (!nullToAbsent || city != null) {
-      map['city'] = Variable<String>(city);
-    }
-    if (!nullToAbsent || state != null) {
-      map['state'] = Variable<String>(state);
-    }
-    if (!nullToAbsent || country != null) {
-      map['country'] = Variable<String>(country);
-    }
-    if (!nullToAbsent || pinCode != null) {
-      map['pin_code'] = Variable<String>(pinCode);
-    }
-    if (!nullToAbsent || gstRegistrationType != null) {
-      map['gst_registration_type'] = Variable<String>(gstRegistrationType);
+    if (!nullToAbsent || addressLine2 != null) {
+      map['address_line2'] = Variable<String>(addressLine2);
     }
     map['gst_enabled'] = Variable<bool>(gstEnabled);
     if (!nullToAbsent || gstin != null) {
       map['gstin'] = Variable<String>(gstin);
     }
-    if (!nullToAbsent || pan != null) {
-      map['pan'] = Variable<String>(pan);
-    }
-    map['currency'] = Variable<String>(currency);
-    map['invoice_prefix'] = Variable<String>(invoicePrefix);
-    map['next_invoice_number'] = Variable<int>(nextInvoiceNumber);
+    map['status'] = Variable<String>(status);
     if (!nullToAbsent || logoUrl != null) {
       map['logo_url'] = Variable<String>(logoUrl);
     }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || lastUsedAt != null) {
+      map['last_used_at'] = Variable<DateTime>(lastUsedAt);
     }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -553,44 +465,38 @@ class BusinessTableData extends DataClass
           ? const Value.absent()
           : Value(accountId),
       businessName: Value(businessName),
+      ownerName: ownerName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerName),
       businessType: businessType == null && nullToAbsent
           ? const Value.absent()
           : Value(businessType),
       phone:
           phone == null && nullToAbsent ? const Value.absent() : Value(phone),
-      alternatePhone: alternatePhone == null && nullToAbsent
+      whatsappNumber: whatsappNumber == null && nullToAbsent
           ? const Value.absent()
-          : Value(alternatePhone),
+          : Value(whatsappNumber),
       email:
           email == null && nullToAbsent ? const Value.absent() : Value(email),
-      address: address == null && nullToAbsent
+      addressLine1: addressLine1 == null && nullToAbsent
           ? const Value.absent()
-          : Value(address),
-      city: city == null && nullToAbsent ? const Value.absent() : Value(city),
-      state:
-          state == null && nullToAbsent ? const Value.absent() : Value(state),
-      country: country == null && nullToAbsent
+          : Value(addressLine1),
+      addressLine2: addressLine2 == null && nullToAbsent
           ? const Value.absent()
-          : Value(country),
-      pinCode: pinCode == null && nullToAbsent
-          ? const Value.absent()
-          : Value(pinCode),
-      gstRegistrationType: gstRegistrationType == null && nullToAbsent
-          ? const Value.absent()
-          : Value(gstRegistrationType),
+          : Value(addressLine2),
       gstEnabled: Value(gstEnabled),
       gstin:
           gstin == null && nullToAbsent ? const Value.absent() : Value(gstin),
-      pan: pan == null && nullToAbsent ? const Value.absent() : Value(pan),
-      currency: Value(currency),
-      invoicePrefix: Value(invoicePrefix),
-      nextInvoiceNumber: Value(nextInvoiceNumber),
+      status: Value(status),
       logoUrl: logoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(logoUrl),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
+      lastUsedAt: lastUsedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastUsedAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -614,25 +520,19 @@ class BusinessTableData extends DataClass
       id: serializer.fromJson<String>(json['id']),
       accountId: serializer.fromJson<String?>(json['accountId']),
       businessName: serializer.fromJson<String>(json['businessName']),
+      ownerName: serializer.fromJson<String?>(json['ownerName']),
       businessType: serializer.fromJson<String?>(json['businessType']),
       phone: serializer.fromJson<String?>(json['phone']),
-      alternatePhone: serializer.fromJson<String?>(json['alternatePhone']),
+      whatsappNumber: serializer.fromJson<String?>(json['whatsappNumber']),
       email: serializer.fromJson<String?>(json['email']),
-      address: serializer.fromJson<String?>(json['address']),
-      city: serializer.fromJson<String?>(json['city']),
-      state: serializer.fromJson<String?>(json['state']),
-      country: serializer.fromJson<String?>(json['country']),
-      pinCode: serializer.fromJson<String?>(json['pinCode']),
-      gstRegistrationType:
-          serializer.fromJson<String?>(json['gstRegistrationType']),
+      addressLine1: serializer.fromJson<String?>(json['addressLine1']),
+      addressLine2: serializer.fromJson<String?>(json['addressLine2']),
       gstEnabled: serializer.fromJson<bool>(json['gstEnabled']),
       gstin: serializer.fromJson<String?>(json['gstin']),
-      pan: serializer.fromJson<String?>(json['pan']),
-      currency: serializer.fromJson<String>(json['currency']),
-      invoicePrefix: serializer.fromJson<String>(json['invoicePrefix']),
-      nextInvoiceNumber: serializer.fromJson<int>(json['nextInvoiceNumber']),
+      status: serializer.fromJson<String>(json['status']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      lastUsedAt: serializer.fromJson<DateTime?>(json['lastUsedAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       clientUpdatedAt: serializer.fromJson<DateTime?>(json['clientUpdatedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
@@ -647,24 +547,19 @@ class BusinessTableData extends DataClass
       'id': serializer.toJson<String>(id),
       'accountId': serializer.toJson<String?>(accountId),
       'businessName': serializer.toJson<String>(businessName),
+      'ownerName': serializer.toJson<String?>(ownerName),
       'businessType': serializer.toJson<String?>(businessType),
       'phone': serializer.toJson<String?>(phone),
-      'alternatePhone': serializer.toJson<String?>(alternatePhone),
+      'whatsappNumber': serializer.toJson<String?>(whatsappNumber),
       'email': serializer.toJson<String?>(email),
-      'address': serializer.toJson<String?>(address),
-      'city': serializer.toJson<String?>(city),
-      'state': serializer.toJson<String?>(state),
-      'country': serializer.toJson<String?>(country),
-      'pinCode': serializer.toJson<String?>(pinCode),
-      'gstRegistrationType': serializer.toJson<String?>(gstRegistrationType),
+      'addressLine1': serializer.toJson<String?>(addressLine1),
+      'addressLine2': serializer.toJson<String?>(addressLine2),
       'gstEnabled': serializer.toJson<bool>(gstEnabled),
       'gstin': serializer.toJson<String?>(gstin),
-      'pan': serializer.toJson<String?>(pan),
-      'currency': serializer.toJson<String>(currency),
-      'invoicePrefix': serializer.toJson<String>(invoicePrefix),
-      'nextInvoiceNumber': serializer.toJson<int>(nextInvoiceNumber),
+      'status': serializer.toJson<String>(status),
       'logoUrl': serializer.toJson<String?>(logoUrl),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'lastUsedAt': serializer.toJson<DateTime?>(lastUsedAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'clientUpdatedAt': serializer.toJson<DateTime?>(clientUpdatedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
@@ -677,24 +572,19 @@ class BusinessTableData extends DataClass
           {String? id,
           Value<String?> accountId = const Value.absent(),
           String? businessName,
+          Value<String?> ownerName = const Value.absent(),
           Value<String?> businessType = const Value.absent(),
           Value<String?> phone = const Value.absent(),
-          Value<String?> alternatePhone = const Value.absent(),
+          Value<String?> whatsappNumber = const Value.absent(),
           Value<String?> email = const Value.absent(),
-          Value<String?> address = const Value.absent(),
-          Value<String?> city = const Value.absent(),
-          Value<String?> state = const Value.absent(),
-          Value<String?> country = const Value.absent(),
-          Value<String?> pinCode = const Value.absent(),
-          Value<String?> gstRegistrationType = const Value.absent(),
+          Value<String?> addressLine1 = const Value.absent(),
+          Value<String?> addressLine2 = const Value.absent(),
           bool? gstEnabled,
           Value<String?> gstin = const Value.absent(),
-          Value<String?> pan = const Value.absent(),
-          String? currency,
-          String? invoicePrefix,
-          int? nextInvoiceNumber,
+          String? status,
           Value<String?> logoUrl = const Value.absent(),
           Value<DateTime?> createdAt = const Value.absent(),
+          Value<DateTime?> lastUsedAt = const Value.absent(),
           Value<DateTime?> updatedAt = const Value.absent(),
           Value<DateTime?> clientUpdatedAt = const Value.absent(),
           String? syncStatus,
@@ -704,28 +594,23 @@ class BusinessTableData extends DataClass
         id: id ?? this.id,
         accountId: accountId.present ? accountId.value : this.accountId,
         businessName: businessName ?? this.businessName,
+        ownerName: ownerName.present ? ownerName.value : this.ownerName,
         businessType:
             businessType.present ? businessType.value : this.businessType,
         phone: phone.present ? phone.value : this.phone,
-        alternatePhone:
-            alternatePhone.present ? alternatePhone.value : this.alternatePhone,
+        whatsappNumber:
+            whatsappNumber.present ? whatsappNumber.value : this.whatsappNumber,
         email: email.present ? email.value : this.email,
-        address: address.present ? address.value : this.address,
-        city: city.present ? city.value : this.city,
-        state: state.present ? state.value : this.state,
-        country: country.present ? country.value : this.country,
-        pinCode: pinCode.present ? pinCode.value : this.pinCode,
-        gstRegistrationType: gstRegistrationType.present
-            ? gstRegistrationType.value
-            : this.gstRegistrationType,
+        addressLine1:
+            addressLine1.present ? addressLine1.value : this.addressLine1,
+        addressLine2:
+            addressLine2.present ? addressLine2.value : this.addressLine2,
         gstEnabled: gstEnabled ?? this.gstEnabled,
         gstin: gstin.present ? gstin.value : this.gstin,
-        pan: pan.present ? pan.value : this.pan,
-        currency: currency ?? this.currency,
-        invoicePrefix: invoicePrefix ?? this.invoicePrefix,
-        nextInvoiceNumber: nextInvoiceNumber ?? this.nextInvoiceNumber,
+        status: status ?? this.status,
         logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
+        lastUsedAt: lastUsedAt.present ? lastUsedAt.value : this.lastUsedAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         clientUpdatedAt: clientUpdatedAt.present
             ? clientUpdatedAt.value
@@ -742,35 +627,29 @@ class BusinessTableData extends DataClass
       businessName: data.businessName.present
           ? data.businessName.value
           : this.businessName,
+      ownerName: data.ownerName.present ? data.ownerName.value : this.ownerName,
       businessType: data.businessType.present
           ? data.businessType.value
           : this.businessType,
       phone: data.phone.present ? data.phone.value : this.phone,
-      alternatePhone: data.alternatePhone.present
-          ? data.alternatePhone.value
-          : this.alternatePhone,
+      whatsappNumber: data.whatsappNumber.present
+          ? data.whatsappNumber.value
+          : this.whatsappNumber,
       email: data.email.present ? data.email.value : this.email,
-      address: data.address.present ? data.address.value : this.address,
-      city: data.city.present ? data.city.value : this.city,
-      state: data.state.present ? data.state.value : this.state,
-      country: data.country.present ? data.country.value : this.country,
-      pinCode: data.pinCode.present ? data.pinCode.value : this.pinCode,
-      gstRegistrationType: data.gstRegistrationType.present
-          ? data.gstRegistrationType.value
-          : this.gstRegistrationType,
+      addressLine1: data.addressLine1.present
+          ? data.addressLine1.value
+          : this.addressLine1,
+      addressLine2: data.addressLine2.present
+          ? data.addressLine2.value
+          : this.addressLine2,
       gstEnabled:
           data.gstEnabled.present ? data.gstEnabled.value : this.gstEnabled,
       gstin: data.gstin.present ? data.gstin.value : this.gstin,
-      pan: data.pan.present ? data.pan.value : this.pan,
-      currency: data.currency.present ? data.currency.value : this.currency,
-      invoicePrefix: data.invoicePrefix.present
-          ? data.invoicePrefix.value
-          : this.invoicePrefix,
-      nextInvoiceNumber: data.nextInvoiceNumber.present
-          ? data.nextInvoiceNumber.value
-          : this.nextInvoiceNumber,
+      status: data.status.present ? data.status.value : this.status,
       logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      lastUsedAt:
+          data.lastUsedAt.present ? data.lastUsedAt.value : this.lastUsedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       clientUpdatedAt: data.clientUpdatedAt.present
           ? data.clientUpdatedAt.value
@@ -790,24 +669,19 @@ class BusinessTableData extends DataClass
           ..write('id: $id, ')
           ..write('accountId: $accountId, ')
           ..write('businessName: $businessName, ')
+          ..write('ownerName: $ownerName, ')
           ..write('businessType: $businessType, ')
           ..write('phone: $phone, ')
-          ..write('alternatePhone: $alternatePhone, ')
+          ..write('whatsappNumber: $whatsappNumber, ')
           ..write('email: $email, ')
-          ..write('address: $address, ')
-          ..write('city: $city, ')
-          ..write('state: $state, ')
-          ..write('country: $country, ')
-          ..write('pinCode: $pinCode, ')
-          ..write('gstRegistrationType: $gstRegistrationType, ')
+          ..write('addressLine1: $addressLine1, ')
+          ..write('addressLine2: $addressLine2, ')
           ..write('gstEnabled: $gstEnabled, ')
           ..write('gstin: $gstin, ')
-          ..write('pan: $pan, ')
-          ..write('currency: $currency, ')
-          ..write('invoicePrefix: $invoicePrefix, ')
-          ..write('nextInvoiceNumber: $nextInvoiceNumber, ')
+          ..write('status: $status, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('createdAt: $createdAt, ')
+          ..write('lastUsedAt: $lastUsedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('clientUpdatedAt: $clientUpdatedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -822,24 +696,19 @@ class BusinessTableData extends DataClass
         id,
         accountId,
         businessName,
+        ownerName,
         businessType,
         phone,
-        alternatePhone,
+        whatsappNumber,
         email,
-        address,
-        city,
-        state,
-        country,
-        pinCode,
-        gstRegistrationType,
+        addressLine1,
+        addressLine2,
         gstEnabled,
         gstin,
-        pan,
-        currency,
-        invoicePrefix,
-        nextInvoiceNumber,
+        status,
         logoUrl,
         createdAt,
+        lastUsedAt,
         updatedAt,
         clientUpdatedAt,
         syncStatus,
@@ -853,24 +722,19 @@ class BusinessTableData extends DataClass
           other.id == this.id &&
           other.accountId == this.accountId &&
           other.businessName == this.businessName &&
+          other.ownerName == this.ownerName &&
           other.businessType == this.businessType &&
           other.phone == this.phone &&
-          other.alternatePhone == this.alternatePhone &&
+          other.whatsappNumber == this.whatsappNumber &&
           other.email == this.email &&
-          other.address == this.address &&
-          other.city == this.city &&
-          other.state == this.state &&
-          other.country == this.country &&
-          other.pinCode == this.pinCode &&
-          other.gstRegistrationType == this.gstRegistrationType &&
+          other.addressLine1 == this.addressLine1 &&
+          other.addressLine2 == this.addressLine2 &&
           other.gstEnabled == this.gstEnabled &&
           other.gstin == this.gstin &&
-          other.pan == this.pan &&
-          other.currency == this.currency &&
-          other.invoicePrefix == this.invoicePrefix &&
-          other.nextInvoiceNumber == this.nextInvoiceNumber &&
+          other.status == this.status &&
           other.logoUrl == this.logoUrl &&
           other.createdAt == this.createdAt &&
+          other.lastUsedAt == this.lastUsedAt &&
           other.updatedAt == this.updatedAt &&
           other.clientUpdatedAt == this.clientUpdatedAt &&
           other.syncStatus == this.syncStatus &&
@@ -882,24 +746,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
   final Value<String> id;
   final Value<String?> accountId;
   final Value<String> businessName;
+  final Value<String?> ownerName;
   final Value<String?> businessType;
   final Value<String?> phone;
-  final Value<String?> alternatePhone;
+  final Value<String?> whatsappNumber;
   final Value<String?> email;
-  final Value<String?> address;
-  final Value<String?> city;
-  final Value<String?> state;
-  final Value<String?> country;
-  final Value<String?> pinCode;
-  final Value<String?> gstRegistrationType;
+  final Value<String?> addressLine1;
+  final Value<String?> addressLine2;
   final Value<bool> gstEnabled;
   final Value<String?> gstin;
-  final Value<String?> pan;
-  final Value<String> currency;
-  final Value<String> invoicePrefix;
-  final Value<int> nextInvoiceNumber;
+  final Value<String> status;
   final Value<String?> logoUrl;
   final Value<DateTime?> createdAt;
+  final Value<DateTime?> lastUsedAt;
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> clientUpdatedAt;
   final Value<String> syncStatus;
@@ -910,24 +769,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
     this.id = const Value.absent(),
     this.accountId = const Value.absent(),
     this.businessName = const Value.absent(),
+    this.ownerName = const Value.absent(),
     this.businessType = const Value.absent(),
     this.phone = const Value.absent(),
-    this.alternatePhone = const Value.absent(),
+    this.whatsappNumber = const Value.absent(),
     this.email = const Value.absent(),
-    this.address = const Value.absent(),
-    this.city = const Value.absent(),
-    this.state = const Value.absent(),
-    this.country = const Value.absent(),
-    this.pinCode = const Value.absent(),
-    this.gstRegistrationType = const Value.absent(),
+    this.addressLine1 = const Value.absent(),
+    this.addressLine2 = const Value.absent(),
     this.gstEnabled = const Value.absent(),
     this.gstin = const Value.absent(),
-    this.pan = const Value.absent(),
-    this.currency = const Value.absent(),
-    this.invoicePrefix = const Value.absent(),
-    this.nextInvoiceNumber = const Value.absent(),
+    this.status = const Value.absent(),
     this.logoUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.lastUsedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.clientUpdatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -939,24 +793,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
     required String id,
     this.accountId = const Value.absent(),
     required String businessName,
+    this.ownerName = const Value.absent(),
     this.businessType = const Value.absent(),
     this.phone = const Value.absent(),
-    this.alternatePhone = const Value.absent(),
+    this.whatsappNumber = const Value.absent(),
     this.email = const Value.absent(),
-    this.address = const Value.absent(),
-    this.city = const Value.absent(),
-    this.state = const Value.absent(),
-    this.country = const Value.absent(),
-    this.pinCode = const Value.absent(),
-    this.gstRegistrationType = const Value.absent(),
+    this.addressLine1 = const Value.absent(),
+    this.addressLine2 = const Value.absent(),
     this.gstEnabled = const Value.absent(),
     this.gstin = const Value.absent(),
-    this.pan = const Value.absent(),
-    this.currency = const Value.absent(),
-    this.invoicePrefix = const Value.absent(),
-    this.nextInvoiceNumber = const Value.absent(),
+    this.status = const Value.absent(),
     this.logoUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.lastUsedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.clientUpdatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -969,24 +818,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
     Expression<String>? id,
     Expression<String>? accountId,
     Expression<String>? businessName,
+    Expression<String>? ownerName,
     Expression<String>? businessType,
     Expression<String>? phone,
-    Expression<String>? alternatePhone,
+    Expression<String>? whatsappNumber,
     Expression<String>? email,
-    Expression<String>? address,
-    Expression<String>? city,
-    Expression<String>? state,
-    Expression<String>? country,
-    Expression<String>? pinCode,
-    Expression<String>? gstRegistrationType,
+    Expression<String>? addressLine1,
+    Expression<String>? addressLine2,
     Expression<bool>? gstEnabled,
     Expression<String>? gstin,
-    Expression<String>? pan,
-    Expression<String>? currency,
-    Expression<String>? invoicePrefix,
-    Expression<int>? nextInvoiceNumber,
+    Expression<String>? status,
     Expression<String>? logoUrl,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? lastUsedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? clientUpdatedAt,
     Expression<String>? syncStatus,
@@ -998,25 +842,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
       if (id != null) 'id': id,
       if (accountId != null) 'account_id': accountId,
       if (businessName != null) 'business_name': businessName,
+      if (ownerName != null) 'owner_name': ownerName,
       if (businessType != null) 'business_type': businessType,
       if (phone != null) 'phone': phone,
-      if (alternatePhone != null) 'alternate_phone': alternatePhone,
+      if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
       if (email != null) 'email': email,
-      if (address != null) 'address': address,
-      if (city != null) 'city': city,
-      if (state != null) 'state': state,
-      if (country != null) 'country': country,
-      if (pinCode != null) 'pin_code': pinCode,
-      if (gstRegistrationType != null)
-        'gst_registration_type': gstRegistrationType,
+      if (addressLine1 != null) 'address_line1': addressLine1,
+      if (addressLine2 != null) 'address_line2': addressLine2,
       if (gstEnabled != null) 'gst_enabled': gstEnabled,
       if (gstin != null) 'gstin': gstin,
-      if (pan != null) 'pan': pan,
-      if (currency != null) 'currency': currency,
-      if (invoicePrefix != null) 'invoice_prefix': invoicePrefix,
-      if (nextInvoiceNumber != null) 'next_invoice_number': nextInvoiceNumber,
+      if (status != null) 'status': status,
       if (logoUrl != null) 'logo_url': logoUrl,
       if (createdAt != null) 'created_at': createdAt,
+      if (lastUsedAt != null) 'last_used_at': lastUsedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (clientUpdatedAt != null) 'client_updated_at': clientUpdatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -1030,24 +868,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
       {Value<String>? id,
       Value<String?>? accountId,
       Value<String>? businessName,
+      Value<String?>? ownerName,
       Value<String?>? businessType,
       Value<String?>? phone,
-      Value<String?>? alternatePhone,
+      Value<String?>? whatsappNumber,
       Value<String?>? email,
-      Value<String?>? address,
-      Value<String?>? city,
-      Value<String?>? state,
-      Value<String?>? country,
-      Value<String?>? pinCode,
-      Value<String?>? gstRegistrationType,
+      Value<String?>? addressLine1,
+      Value<String?>? addressLine2,
       Value<bool>? gstEnabled,
       Value<String?>? gstin,
-      Value<String?>? pan,
-      Value<String>? currency,
-      Value<String>? invoicePrefix,
-      Value<int>? nextInvoiceNumber,
+      Value<String>? status,
       Value<String?>? logoUrl,
       Value<DateTime?>? createdAt,
+      Value<DateTime?>? lastUsedAt,
       Value<DateTime?>? updatedAt,
       Value<DateTime?>? clientUpdatedAt,
       Value<String>? syncStatus,
@@ -1058,24 +891,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
       id: id ?? this.id,
       accountId: accountId ?? this.accountId,
       businessName: businessName ?? this.businessName,
+      ownerName: ownerName ?? this.ownerName,
       businessType: businessType ?? this.businessType,
       phone: phone ?? this.phone,
-      alternatePhone: alternatePhone ?? this.alternatePhone,
+      whatsappNumber: whatsappNumber ?? this.whatsappNumber,
       email: email ?? this.email,
-      address: address ?? this.address,
-      city: city ?? this.city,
-      state: state ?? this.state,
-      country: country ?? this.country,
-      pinCode: pinCode ?? this.pinCode,
-      gstRegistrationType: gstRegistrationType ?? this.gstRegistrationType,
+      addressLine1: addressLine1 ?? this.addressLine1,
+      addressLine2: addressLine2 ?? this.addressLine2,
       gstEnabled: gstEnabled ?? this.gstEnabled,
       gstin: gstin ?? this.gstin,
-      pan: pan ?? this.pan,
-      currency: currency ?? this.currency,
-      invoicePrefix: invoicePrefix ?? this.invoicePrefix,
-      nextInvoiceNumber: nextInvoiceNumber ?? this.nextInvoiceNumber,
+      status: status ?? this.status,
       logoUrl: logoUrl ?? this.logoUrl,
       createdAt: createdAt ?? this.createdAt,
+      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       clientUpdatedAt: clientUpdatedAt ?? this.clientUpdatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -1097,36 +925,26 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
     if (businessName.present) {
       map['business_name'] = Variable<String>(businessName.value);
     }
+    if (ownerName.present) {
+      map['owner_name'] = Variable<String>(ownerName.value);
+    }
     if (businessType.present) {
       map['business_type'] = Variable<String>(businessType.value);
     }
     if (phone.present) {
       map['phone'] = Variable<String>(phone.value);
     }
-    if (alternatePhone.present) {
-      map['alternate_phone'] = Variable<String>(alternatePhone.value);
+    if (whatsappNumber.present) {
+      map['whatsapp_number'] = Variable<String>(whatsappNumber.value);
     }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
-    if (address.present) {
-      map['address'] = Variable<String>(address.value);
+    if (addressLine1.present) {
+      map['address_line1'] = Variable<String>(addressLine1.value);
     }
-    if (city.present) {
-      map['city'] = Variable<String>(city.value);
-    }
-    if (state.present) {
-      map['state'] = Variable<String>(state.value);
-    }
-    if (country.present) {
-      map['country'] = Variable<String>(country.value);
-    }
-    if (pinCode.present) {
-      map['pin_code'] = Variable<String>(pinCode.value);
-    }
-    if (gstRegistrationType.present) {
-      map['gst_registration_type'] =
-          Variable<String>(gstRegistrationType.value);
+    if (addressLine2.present) {
+      map['address_line2'] = Variable<String>(addressLine2.value);
     }
     if (gstEnabled.present) {
       map['gst_enabled'] = Variable<bool>(gstEnabled.value);
@@ -1134,23 +952,17 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
     if (gstin.present) {
       map['gstin'] = Variable<String>(gstin.value);
     }
-    if (pan.present) {
-      map['pan'] = Variable<String>(pan.value);
-    }
-    if (currency.present) {
-      map['currency'] = Variable<String>(currency.value);
-    }
-    if (invoicePrefix.present) {
-      map['invoice_prefix'] = Variable<String>(invoicePrefix.value);
-    }
-    if (nextInvoiceNumber.present) {
-      map['next_invoice_number'] = Variable<int>(nextInvoiceNumber.value);
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
     }
     if (logoUrl.present) {
       map['logo_url'] = Variable<String>(logoUrl.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (lastUsedAt.present) {
+      map['last_used_at'] = Variable<DateTime>(lastUsedAt.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -1179,24 +991,19 @@ class BusinessTableCompanion extends UpdateCompanion<BusinessTableData> {
           ..write('id: $id, ')
           ..write('accountId: $accountId, ')
           ..write('businessName: $businessName, ')
+          ..write('ownerName: $ownerName, ')
           ..write('businessType: $businessType, ')
           ..write('phone: $phone, ')
-          ..write('alternatePhone: $alternatePhone, ')
+          ..write('whatsappNumber: $whatsappNumber, ')
           ..write('email: $email, ')
-          ..write('address: $address, ')
-          ..write('city: $city, ')
-          ..write('state: $state, ')
-          ..write('country: $country, ')
-          ..write('pinCode: $pinCode, ')
-          ..write('gstRegistrationType: $gstRegistrationType, ')
+          ..write('addressLine1: $addressLine1, ')
+          ..write('addressLine2: $addressLine2, ')
           ..write('gstEnabled: $gstEnabled, ')
           ..write('gstin: $gstin, ')
-          ..write('pan: $pan, ')
-          ..write('currency: $currency, ')
-          ..write('invoicePrefix: $invoicePrefix, ')
-          ..write('nextInvoiceNumber: $nextInvoiceNumber, ')
+          ..write('status: $status, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('createdAt: $createdAt, ')
+          ..write('lastUsedAt: $lastUsedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('clientUpdatedAt: $clientUpdatedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -1547,24 +1354,19 @@ typedef $$BusinessTableTableCreateCompanionBuilder = BusinessTableCompanion
   required String id,
   Value<String?> accountId,
   required String businessName,
+  Value<String?> ownerName,
   Value<String?> businessType,
   Value<String?> phone,
-  Value<String?> alternatePhone,
+  Value<String?> whatsappNumber,
   Value<String?> email,
-  Value<String?> address,
-  Value<String?> city,
-  Value<String?> state,
-  Value<String?> country,
-  Value<String?> pinCode,
-  Value<String?> gstRegistrationType,
+  Value<String?> addressLine1,
+  Value<String?> addressLine2,
   Value<bool> gstEnabled,
   Value<String?> gstin,
-  Value<String?> pan,
-  Value<String> currency,
-  Value<String> invoicePrefix,
-  Value<int> nextInvoiceNumber,
+  Value<String> status,
   Value<String?> logoUrl,
   Value<DateTime?> createdAt,
+  Value<DateTime?> lastUsedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> clientUpdatedAt,
   Value<String> syncStatus,
@@ -1577,24 +1379,19 @@ typedef $$BusinessTableTableUpdateCompanionBuilder = BusinessTableCompanion
   Value<String> id,
   Value<String?> accountId,
   Value<String> businessName,
+  Value<String?> ownerName,
   Value<String?> businessType,
   Value<String?> phone,
-  Value<String?> alternatePhone,
+  Value<String?> whatsappNumber,
   Value<String?> email,
-  Value<String?> address,
-  Value<String?> city,
-  Value<String?> state,
-  Value<String?> country,
-  Value<String?> pinCode,
-  Value<String?> gstRegistrationType,
+  Value<String?> addressLine1,
+  Value<String?> addressLine2,
   Value<bool> gstEnabled,
   Value<String?> gstin,
-  Value<String?> pan,
-  Value<String> currency,
-  Value<String> invoicePrefix,
-  Value<int> nextInvoiceNumber,
+  Value<String> status,
   Value<String?> logoUrl,
   Value<DateTime?> createdAt,
+  Value<DateTime?> lastUsedAt,
   Value<DateTime?> updatedAt,
   Value<DateTime?> clientUpdatedAt,
   Value<String> syncStatus,
@@ -1621,37 +1418,27 @@ class $$BusinessTableTableFilterComposer
   ColumnFilters<String> get businessName => $composableBuilder(
       column: $table.businessName, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get ownerName => $composableBuilder(
+      column: $table.ownerName, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get businessType => $composableBuilder(
       column: $table.businessType, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get phone => $composableBuilder(
       column: $table.phone, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone,
+  ColumnFilters<String> get whatsappNumber => $composableBuilder(
+      column: $table.whatsappNumber,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get address => $composableBuilder(
-      column: $table.address, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get addressLine1 => $composableBuilder(
+      column: $table.addressLine1, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get city => $composableBuilder(
-      column: $table.city, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get state => $composableBuilder(
-      column: $table.state, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get country => $composableBuilder(
-      column: $table.country, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get pinCode => $composableBuilder(
-      column: $table.pinCode, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get gstRegistrationType => $composableBuilder(
-      column: $table.gstRegistrationType,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get addressLine2 => $composableBuilder(
+      column: $table.addressLine2, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get gstEnabled => $composableBuilder(
       column: $table.gstEnabled, builder: (column) => ColumnFilters(column));
@@ -1659,24 +1446,17 @@ class $$BusinessTableTableFilterComposer
   ColumnFilters<String> get gstin => $composableBuilder(
       column: $table.gstin, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get pan => $composableBuilder(
-      column: $table.pan, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get currency => $composableBuilder(
-      column: $table.currency, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get invoicePrefix => $composableBuilder(
-      column: $table.invoicePrefix, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get nextInvoiceNumber => $composableBuilder(
-      column: $table.nextInvoiceNumber,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get logoUrl => $composableBuilder(
       column: $table.logoUrl, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastUsedAt => $composableBuilder(
+      column: $table.lastUsedAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
@@ -1714,6 +1494,9 @@ class $$BusinessTableTableOrderingComposer
       column: $table.businessName,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get ownerName => $composableBuilder(
+      column: $table.ownerName, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get businessType => $composableBuilder(
       column: $table.businessType,
       builder: (column) => ColumnOrderings(column));
@@ -1721,30 +1504,19 @@ class $$BusinessTableTableOrderingComposer
   ColumnOrderings<String> get phone => $composableBuilder(
       column: $table.phone, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone,
+  ColumnOrderings<String> get whatsappNumber => $composableBuilder(
+      column: $table.whatsappNumber,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get address => $composableBuilder(
-      column: $table.address, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get addressLine1 => $composableBuilder(
+      column: $table.addressLine1,
+      builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get city => $composableBuilder(
-      column: $table.city, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get state => $composableBuilder(
-      column: $table.state, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get country => $composableBuilder(
-      column: $table.country, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get pinCode => $composableBuilder(
-      column: $table.pinCode, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get gstRegistrationType => $composableBuilder(
-      column: $table.gstRegistrationType,
+  ColumnOrderings<String> get addressLine2 => $composableBuilder(
+      column: $table.addressLine2,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get gstEnabled => $composableBuilder(
@@ -1753,25 +1525,17 @@ class $$BusinessTableTableOrderingComposer
   ColumnOrderings<String> get gstin => $composableBuilder(
       column: $table.gstin, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get pan => $composableBuilder(
-      column: $table.pan, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get currency => $composableBuilder(
-      column: $table.currency, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get invoicePrefix => $composableBuilder(
-      column: $table.invoicePrefix,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get nextInvoiceNumber => $composableBuilder(
-      column: $table.nextInvoiceNumber,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get logoUrl => $composableBuilder(
       column: $table.logoUrl, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastUsedAt => $composableBuilder(
+      column: $table.lastUsedAt, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
@@ -1809,35 +1573,26 @@ class $$BusinessTableTableAnnotationComposer
   GeneratedColumn<String> get businessName => $composableBuilder(
       column: $table.businessName, builder: (column) => column);
 
+  GeneratedColumn<String> get ownerName =>
+      $composableBuilder(column: $table.ownerName, builder: (column) => column);
+
   GeneratedColumn<String> get businessType => $composableBuilder(
       column: $table.businessType, builder: (column) => column);
 
   GeneratedColumn<String> get phone =>
       $composableBuilder(column: $table.phone, builder: (column) => column);
 
-  GeneratedColumn<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone, builder: (column) => column);
+  GeneratedColumn<String> get whatsappNumber => $composableBuilder(
+      column: $table.whatsappNumber, builder: (column) => column);
 
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
 
-  GeneratedColumn<String> get address =>
-      $composableBuilder(column: $table.address, builder: (column) => column);
+  GeneratedColumn<String> get addressLine1 => $composableBuilder(
+      column: $table.addressLine1, builder: (column) => column);
 
-  GeneratedColumn<String> get city =>
-      $composableBuilder(column: $table.city, builder: (column) => column);
-
-  GeneratedColumn<String> get state =>
-      $composableBuilder(column: $table.state, builder: (column) => column);
-
-  GeneratedColumn<String> get country =>
-      $composableBuilder(column: $table.country, builder: (column) => column);
-
-  GeneratedColumn<String> get pinCode =>
-      $composableBuilder(column: $table.pinCode, builder: (column) => column);
-
-  GeneratedColumn<String> get gstRegistrationType => $composableBuilder(
-      column: $table.gstRegistrationType, builder: (column) => column);
+  GeneratedColumn<String> get addressLine2 => $composableBuilder(
+      column: $table.addressLine2, builder: (column) => column);
 
   GeneratedColumn<bool> get gstEnabled => $composableBuilder(
       column: $table.gstEnabled, builder: (column) => column);
@@ -1845,23 +1600,17 @@ class $$BusinessTableTableAnnotationComposer
   GeneratedColumn<String> get gstin =>
       $composableBuilder(column: $table.gstin, builder: (column) => column);
 
-  GeneratedColumn<String> get pan =>
-      $composableBuilder(column: $table.pan, builder: (column) => column);
-
-  GeneratedColumn<String> get currency =>
-      $composableBuilder(column: $table.currency, builder: (column) => column);
-
-  GeneratedColumn<String> get invoicePrefix => $composableBuilder(
-      column: $table.invoicePrefix, builder: (column) => column);
-
-  GeneratedColumn<int> get nextInvoiceNumber => $composableBuilder(
-      column: $table.nextInvoiceNumber, builder: (column) => column);
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<String> get logoUrl =>
       $composableBuilder(column: $table.logoUrl, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUsedAt => $composableBuilder(
+      column: $table.lastUsedAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -1909,24 +1658,19 @@ class $$BusinessTableTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String?> accountId = const Value.absent(),
             Value<String> businessName = const Value.absent(),
+            Value<String?> ownerName = const Value.absent(),
             Value<String?> businessType = const Value.absent(),
             Value<String?> phone = const Value.absent(),
-            Value<String?> alternatePhone = const Value.absent(),
+            Value<String?> whatsappNumber = const Value.absent(),
             Value<String?> email = const Value.absent(),
-            Value<String?> address = const Value.absent(),
-            Value<String?> city = const Value.absent(),
-            Value<String?> state = const Value.absent(),
-            Value<String?> country = const Value.absent(),
-            Value<String?> pinCode = const Value.absent(),
-            Value<String?> gstRegistrationType = const Value.absent(),
+            Value<String?> addressLine1 = const Value.absent(),
+            Value<String?> addressLine2 = const Value.absent(),
             Value<bool> gstEnabled = const Value.absent(),
             Value<String?> gstin = const Value.absent(),
-            Value<String?> pan = const Value.absent(),
-            Value<String> currency = const Value.absent(),
-            Value<String> invoicePrefix = const Value.absent(),
-            Value<int> nextInvoiceNumber = const Value.absent(),
+            Value<String> status = const Value.absent(),
             Value<String?> logoUrl = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
+            Value<DateTime?> lastUsedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> clientUpdatedAt = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
@@ -1938,24 +1682,19 @@ class $$BusinessTableTableTableManager extends RootTableManager<
             id: id,
             accountId: accountId,
             businessName: businessName,
+            ownerName: ownerName,
             businessType: businessType,
             phone: phone,
-            alternatePhone: alternatePhone,
+            whatsappNumber: whatsappNumber,
             email: email,
-            address: address,
-            city: city,
-            state: state,
-            country: country,
-            pinCode: pinCode,
-            gstRegistrationType: gstRegistrationType,
+            addressLine1: addressLine1,
+            addressLine2: addressLine2,
             gstEnabled: gstEnabled,
             gstin: gstin,
-            pan: pan,
-            currency: currency,
-            invoicePrefix: invoicePrefix,
-            nextInvoiceNumber: nextInvoiceNumber,
+            status: status,
             logoUrl: logoUrl,
             createdAt: createdAt,
+            lastUsedAt: lastUsedAt,
             updatedAt: updatedAt,
             clientUpdatedAt: clientUpdatedAt,
             syncStatus: syncStatus,
@@ -1967,24 +1706,19 @@ class $$BusinessTableTableTableManager extends RootTableManager<
             required String id,
             Value<String?> accountId = const Value.absent(),
             required String businessName,
+            Value<String?> ownerName = const Value.absent(),
             Value<String?> businessType = const Value.absent(),
             Value<String?> phone = const Value.absent(),
-            Value<String?> alternatePhone = const Value.absent(),
+            Value<String?> whatsappNumber = const Value.absent(),
             Value<String?> email = const Value.absent(),
-            Value<String?> address = const Value.absent(),
-            Value<String?> city = const Value.absent(),
-            Value<String?> state = const Value.absent(),
-            Value<String?> country = const Value.absent(),
-            Value<String?> pinCode = const Value.absent(),
-            Value<String?> gstRegistrationType = const Value.absent(),
+            Value<String?> addressLine1 = const Value.absent(),
+            Value<String?> addressLine2 = const Value.absent(),
             Value<bool> gstEnabled = const Value.absent(),
             Value<String?> gstin = const Value.absent(),
-            Value<String?> pan = const Value.absent(),
-            Value<String> currency = const Value.absent(),
-            Value<String> invoicePrefix = const Value.absent(),
-            Value<int> nextInvoiceNumber = const Value.absent(),
+            Value<String> status = const Value.absent(),
             Value<String?> logoUrl = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
+            Value<DateTime?> lastUsedAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<DateTime?> clientUpdatedAt = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
@@ -1996,24 +1730,19 @@ class $$BusinessTableTableTableManager extends RootTableManager<
             id: id,
             accountId: accountId,
             businessName: businessName,
+            ownerName: ownerName,
             businessType: businessType,
             phone: phone,
-            alternatePhone: alternatePhone,
+            whatsappNumber: whatsappNumber,
             email: email,
-            address: address,
-            city: city,
-            state: state,
-            country: country,
-            pinCode: pinCode,
-            gstRegistrationType: gstRegistrationType,
+            addressLine1: addressLine1,
+            addressLine2: addressLine2,
             gstEnabled: gstEnabled,
             gstin: gstin,
-            pan: pan,
-            currency: currency,
-            invoicePrefix: invoicePrefix,
-            nextInvoiceNumber: nextInvoiceNumber,
+            status: status,
             logoUrl: logoUrl,
             createdAt: createdAt,
+            lastUsedAt: lastUsedAt,
             updatedAt: updatedAt,
             clientUpdatedAt: clientUpdatedAt,
             syncStatus: syncStatus,

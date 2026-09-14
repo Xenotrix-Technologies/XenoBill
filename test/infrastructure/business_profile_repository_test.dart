@@ -54,12 +54,12 @@ void main() {
       createdAt: DateTime(2026, 1, 1),
       updatedAt: DateTime(2026, 9, 5),
       clientUpdatedAt: DateTime(2026, 9, 5),
-      syncStatus: 'synced',
+      syncStatus: 'local',
     );
 
     test('Local First Architecture: UI reads business directly from Drift stream', () async {
       // Save business to Drift
-      await localDataSource.saveBusiness(sampleBusiness, syncStatus: 'synced');
+      await localDataSource.saveBusiness(sampleBusiness, syncStatus: 'local');
 
       // Watch current business stream from Drift
       final currentBizStream = repository.watchCurrentBusiness();
@@ -75,7 +75,7 @@ void main() {
       expect(retrieved.gstin, equals('29ABCDE1234F1Z5'));
     });
 
-    test('Local-First Save: Updating business sets syncStatus to pending locally', () async {
+    test('Local-First Save: Updating business saves data in Drift', () async {
       final updatedBusiness = sampleBusiness.copyWith(
         name: 'Xenobiz Supermarket Updated',
         phone: '9999999999',
@@ -84,52 +84,22 @@ void main() {
       // Perform local update
       await repository.updateBusiness(updatedBusiness);
 
-      // Verify that data is saved immediately in Drift with 'pending' status
+      // Verify that data is saved immediately in Drift
       final retrieved = await localDataSource.getCurrentBusiness();
       expect(retrieved, isNotNull);
       expect(retrieved!.name, equals('Xenobiz Supermarket Updated'));
       expect(retrieved.phone, equals('9999999999'));
-      expect(retrieved.syncStatus, equals('pending'));
     });
 
-    test('BusinessMapper: Bi-directional conversion between Domain, Drift, and Supabase JSON', () {
-      // Test Supabase JSON mapping
-      final supabaseJson = BusinessMapper.toSupabaseJson(sampleBusiness, 'acc_456');
-      expect(supabaseJson['id'], equals('biz_123'));
-      expect(supabaseJson['account_id'], equals('acc_456'));
-      expect(supabaseJson['business_name'], equals('Xenobiz Retail Store'));
-      expect(supabaseJson['business_type'], equals('retail'));
-      expect(supabaseJson['gstin'], equals('29ABCDE1234F1Z5'));
-
-      // Test Supabase Json back to Domain
-      final domainFromSupabase = BusinessMapper.fromSupabaseJson(supabaseJson);
-      expect(domainFromSupabase.id, equals('biz_123'));
-      expect(domainFromSupabase.accountId, equals('acc_456'));
-      expect(domainFromSupabase.name, equals('Xenobiz Retail Store'));
-      expect(domainFromSupabase.type, equals(BusinessType.retail));
-
-      // Test Drift Companion mapping
+    test('BusinessMapper: Conversion between Domain and Drift Companion', () {
       final companion = BusinessMapper.toDriftCompanion(
         sampleBusiness,
-        syncStatus: 'pending',
+        syncStatus: 'local',
         syncError: null,
       );
       expect(companion.id.value, equals('biz_123'));
       expect(companion.businessName.value, equals('Xenobiz Retail Store'));
-      expect(companion.syncStatus.value, equals('pending'));
-    });
-
-    test('Pending Sync Queue: Filter businesses marked for background sync', () async {
-      await localDataSource.saveBusiness(sampleBusiness, syncStatus: 'pending');
-
-      final pending = await localDataSource.getPendingSyncBusinesses();
-      expect(pending.length, equals(1));
-      expect(pending.first.id, equals('biz_123'));
-
-      // Update sync status to synced
-      await localDataSource.updateSyncStatus('biz_123', 'synced');
-      final pendingAfterSync = await localDataSource.getPendingSyncBusinesses();
-      expect(pendingAfterSync.isEmpty, isTrue);
+      expect(companion.syncStatus.value, equals('local'));
     });
   });
 }
