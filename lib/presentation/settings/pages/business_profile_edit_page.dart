@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -9,6 +10,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../domain/entities/business.dart';
 import '../../../domain/entities/business_type.dart';
 import '../../../infrastructure/database/app_database.dart';
+import '../../../infrastructure/supabase/supabase_client.dart';
 import '../../../application/business/business_bloc.dart';
 
 class BusinessProfileEditPage extends StatefulWidget {
@@ -23,11 +25,15 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
   late TextEditingController _nameController;
   late TextEditingController _ownerNameController;
   late TextEditingController _phoneController;
-  late TextEditingController _altPhoneController;
+  late TextEditingController _whatsappController;
   late TextEditingController _emailController;
-  late TextEditingController _addressController;
+  late TextEditingController _addressLine1Controller;
+  late TextEditingController _addressLine2Controller;
+  late TextEditingController _passwordController;
 
   late BusinessType _selectedType;
+  bool _isObscurePassword = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -36,9 +42,11 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
     _nameController = TextEditingController(text: biz?.name ?? '');
     _ownerNameController = TextEditingController(text: biz?.ownerName ?? '');
     _phoneController = TextEditingController(text: biz?.phone ?? '');
-    _altPhoneController = TextEditingController(text: '');
+    _whatsappController = TextEditingController(text: biz?.whatsappNumber ?? '');
     _emailController = TextEditingController(text: biz?.email ?? '');
-    _addressController = TextEditingController(text: biz?.address ?? '');
+    _addressLine1Controller = TextEditingController(text: biz?.addressLine1 ?? '');
+    _addressLine2Controller = TextEditingController(text: biz?.addressLine2 ?? '');
+    _passwordController = TextEditingController();
     _selectedType = biz?.type ?? BusinessType.retail;
   }
 
@@ -47,10 +55,103 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
     _nameController.dispose();
     _ownerNameController.dispose();
     _phoneController.dispose();
-    _altPhoneController.dispose();
+    _whatsappController.dispose();
     _emailController.dispose();
-    _addressController.dispose();
+    _addressLine1Controller.dispose();
+    _addressLine2Controller.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final newPassword = _passwordController.text.trim();
+      if (newPassword.isNotEmpty) {
+        if (newPassword.length < 6) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password must be at least 6 characters long.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isSaving = false);
+          return;
+        }
+
+        final client = SupabaseClientManager.instance.client;
+        if (client.auth.currentUser != null) {
+          await client.auth.updateUser(UserAttributes(password: newPassword));
+        }
+      }
+
+      final current = AppDatabase.instance.currentBusiness;
+      final updatedName = _nameController.text.trim();
+      final updatedOwnerName = _ownerNameController.text.trim();
+      final updatedPhone = _phoneController.text.trim();
+      final updatedWhatsapp = _whatsappController.text.trim();
+      final updatedEmail = _emailController.text.trim();
+      final updatedAddr1 = _addressLine1Controller.text.trim();
+      final updatedAddr2 = _addressLine2Controller.text.trim();
+
+      final updated = (current != null)
+          ? current.copyWith(
+              name: updatedName.isEmpty ? 'My Business' : updatedName,
+              ownerName: updatedOwnerName,
+              businessType: _selectedType,
+              phone: updatedPhone,
+              whatsappNumber: updatedWhatsapp,
+              email: updatedEmail,
+              addressLine1: updatedAddr1,
+              addressLine2: updatedAddr2,
+            )
+          : Business(
+              id: const Uuid().v4(),
+              accountId: SupabaseClientManager.instance.client.auth.currentUser?.id,
+              name: updatedName.isEmpty ? 'My Business' : updatedName,
+              ownerName: updatedOwnerName,
+              businessType: _selectedType,
+              phone: updatedPhone,
+              whatsappNumber: updatedWhatsapp,
+              email: updatedEmail,
+              addressLine1: updatedAddr1,
+              addressLine2: updatedAddr2,
+              gstEnabled: true,
+              gstin: '',
+              invoicePrefix: 'INV',
+              nextInvoiceNumber: 1001,
+            );
+
+      AppDatabase.instance.currentBusiness = updated;
+      if (!mounted) return;
+      context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Business Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   @override
@@ -160,12 +261,12 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Alternate Phone
+                // WhatsApp Number
                 AppTextField(
-                  label: 'Alternate Phone Number (Optional)',
-                  hint: 'e.g. 9876543211',
+                  label: 'WhatsApp Number (Optional)',
+                  hint: 'e.g. 9876543210',
                   keyboardType: TextInputType.phone,
-                  controller: _altPhoneController,
+                  controller: _whatsappController,
                 ),
                 const SizedBox(height: 16),
 
@@ -178,63 +279,75 @@ class _BusinessProfileEditPageState extends State<BusinessProfileEditPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Business Address
+                // Address Line 1
                 AppTextField(
-                  label: 'Business Address (Optional)',
-                  hint: 'Street, Shop #, City, Pincode',
-                  maxLines: 2,
-                  controller: _addressController,
+                  label: 'Address Line 1 (Optional)',
+                  hint: 'Shop / Flat No., Building Name, Street',
+                  controller: _addressLine1Controller,
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
 
-                // Save Button
-                AppButton(
-                  text: 'Save Profile Changes',
-                  width: double.infinity,
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      final current = AppDatabase.instance.currentBusiness;
-                      final updatedName = _nameController.text.trim();
-                      final updatedOwnerName = _ownerNameController.text.trim();
-                      final updatedPhone = _phoneController.text.trim();
-                      final updatedEmail = _emailController.text.trim();
-                      final updatedAddr = _addressController.text.trim();
-
-                      final updated = (current != null)
-                          ? current.copyWith(
-                              name: updatedName.isEmpty ? 'My Business' : updatedName,
-                              ownerName: updatedOwnerName,
-                              businessType: _selectedType,
-                              phone: updatedPhone,
-                              email: updatedEmail,
-                              address: updatedAddr,
-                            )
-                          : Business(
-                              id: const Uuid().v4(),
-                              name: updatedName.isEmpty ? 'My Business' : updatedName,
-                              ownerName: updatedOwnerName,
-                              businessType: _selectedType,
-                              phone: updatedPhone,
-                              email: updatedEmail,
-                              address: updatedAddr,
-                              gstEnabled: true,
-                              gstin: '',
-                              invoicePrefix: 'INV',
-                              nextInvoiceNumber: 1001,
-                            );
-
-                      AppDatabase.instance.currentBusiness = updated;
-                      context.read<BusinessBloc>().add(UpdateBusinessEvent(updated));
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Business Profile updated successfully!')),
-                      );
-                      context.pop();
-                    }
-                  },
+                // Address Line 2
+                AppTextField(
+                  label: 'Address Line 2 (Optional)',
+                  hint: 'Area, Landmark, City, Pincode',
+                  controller: _addressLine2Controller,
                 ),
+                const SizedBox(height: 24),
+
+                // Password Section
+                const Divider(),
+                const SizedBox(height: 12),
+                const Text(
+                  'Security',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Leave password blank if you do not wish to change it',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 12),
+
+                AppTextField(
+                  label: 'Change Password (Optional)',
+                  hint: 'Enter new password',
+                  obscureText: _isObscurePassword,
+                  controller: _passwordController,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isObscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: const Color(0xFF64748B),
+                    ),
+                    onPressed: () {
+                      setState(() => _isObscurePassword = !_isObscurePassword);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: AppButton(
+            text: _isSaving ? 'Saving Changes...' : 'Save Profile Changes',
+            isLoading: _isSaving,
+            width: double.infinity,
+            onPressed: _isSaving ? null : _saveProfile,
           ),
         ),
       ),

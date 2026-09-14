@@ -89,6 +89,15 @@ class SubscriptionDetails extends Equatable {
     return diff <= 0 ? 30 : diff;
   }
 
+  /// Calculates remaining active subscription days based on current system time
+  int get remainingSubscriptionDays {
+    if (subscriptionEndDate == null) return 0;
+    final now = DateTime.now();
+    if (now.isAfter(subscriptionEndDate!)) return 0;
+    final diff = subscriptionEndDate!.difference(now).inDays;
+    return diff < 0 ? 0 : diff + 1;
+  }
+
   /// Checks if 5+ hours have elapsed since last reminder modal popup dismissal
   bool get shouldShowReminderPopup {
     if (status.isRestricted) return true;

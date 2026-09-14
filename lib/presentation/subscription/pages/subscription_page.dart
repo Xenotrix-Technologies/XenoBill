@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,12 +8,275 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../domain/entities/subscription_details.dart';
 import '../../../domain/entities/subscription_transaction.dart';
+import '../../../infrastructure/supabase/supabase_client.dart';
 import '../../../application/subscription/subscription_bloc.dart';
 import '../../../application/subscription/subscription_event.dart';
 import '../../../application/subscription/subscription_state.dart';
 
-class SubscriptionPage extends StatelessWidget {
+/// Data class representing an offer record from public.subscription_offers
+class SubscriptionOffer {
+  final String id;
+  final String offerName;
+  final String description;
+  final String planId;
+  final double offerPrice;
+  final String currency;
+  final bool isActive;
+
+  const SubscriptionOffer({
+    required this.id,
+    required this.offerName,
+    required this.description,
+    required this.planId,
+    required this.offerPrice,
+    this.currency = 'INR',
+    this.isActive = true,
+  });
+
+  factory SubscriptionOffer.fromSupabaseJson(Map<String, dynamic> json) {
+    return SubscriptionOffer(
+      id: json['id']?.toString() ?? '',
+      offerName: json['offer_name']?.toString() ?? json['name']?.toString() ?? 'Special Offer',
+      description: json['description']?.toString() ?? '',
+      planId: json['plan_id']?.toString() ?? '',
+      offerPrice: ((json['offer_price'] ?? json['price'] ?? 0.0) as num).toDouble(),
+      currency: json['currency']?.toString() ?? 'INR',
+      isActive: json['is_active'] != false,
+    );
+  }
+}
+
+/// Data class representing a plan record from public.subscription_plans
+class SubscriptionPlan {
+  final String id;
+  final String planName;
+  final String description;
+  final double price;
+  final String billingCycle; // 'monthly' or 'yearly'
+  final double? originalPrice;
+  final String? discountTag;
+  final List<String> features;
+  final bool isRecommended;
+  final bool isActive;
+  final SubscriptionOffer? activeOffer;
+
+  const SubscriptionPlan({
+    required this.id,
+    required this.planName,
+    this.description = '',
+    required this.price,
+    required this.billingCycle,
+    this.originalPrice,
+    this.discountTag,
+    required this.features,
+    this.isRecommended = false,
+    this.isActive = true,
+    this.activeOffer,
+  });
+
+  double get finalPrice => activeOffer != null ? activeOffer!.offerPrice : price;
+  double? get strikethroughPrice => activeOffer != null ? price : originalPrice;
+
+  factory SubscriptionPlan.fromSupabaseJson(Map<String, dynamic> json, {SubscriptionOffer? offer}) {
+    List<String> parsedFeatures = [];
+    if (json['features'] is List) {
+      parsedFeatures = (json['features'] as List).map((e) => e.toString()).toList();
+    } else if (json['plan_details'] != null && json['plan_details']['features'] is List) {
+      parsedFeatures = (json['plan_details']['features'] as List).map((e) => e.toString()).toList();
+    } else if (json['features'] is String) {
+      try {
+        final decoded = jsonDecode(json['features']);
+        if (decoded is List) {
+          parsedFeatures = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    }
+
+    final cycleStr = json['billing_cycle']?.toString().toLowerCase() ?? json['cycle']?.toString().toLowerCase() ?? 'monthly';
+    final isYearly = cycleStr.contains('year');
+    final rawOrigPrice = (json['original_price'] as num?)?.toDouble();
+
+    return SubscriptionPlan(
+      id: json['id']?.toString() ?? '',
+      planName: json['plan_name']?.toString() ?? json['name']?.toString() ?? (isYearly ? 'Xenobill Pro — Yearly' : 'Xenobill Pro — Monthly'),
+      description: json['description']?.toString() ?? (isYearly ? 'Complete annual access to all Xenobill Pro features with priority support.' : 'Flexible monthly access to all Xenobill Pro features.'),
+      price: ((json['price'] ?? json['amount'] ?? (isYearly ? 4999.0 : 499.0)) as num).toDouble(),
+      billingCycle: isYearly ? 'yearly' : 'monthly',
+      originalPrice: rawOrigPrice,
+      discountTag: json['discount_tag']?.toString() ?? (isYearly ? 'Save 17%' : null),
+      features: parsedFeatures.isNotEmpty
+          ? parsedFeatures
+          : (isYearly
+              ? [
+                  'All Pro Monthly Features',
+                  'Priority Support & Onboarding',
+                  'GST Tax Returns & E-Way Bills',
+                  'Custom Invoice Templates'
+                ]
+              : [
+                  'Unlimited Invoices & Purchases',
+                  'Full Analytics & Smart Insights',
+                  'WhatsApp & Email Billing',
+                  'Cloud Backup & Multi-device Sync'
+                ]),
+      isRecommended: json['is_recommended'] == true || json['is_popular'] == true || isYearly,
+      isActive: json['is_active'] != false,
+      activeOffer: offer,
+    );
+  }
+}
+
+class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
+
+  @override
+  State<SubscriptionPage> createState() => _SubscriptionPageState();
+}
+
+class _SubscriptionPageState extends State<SubscriptionPage> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _availablePlansKey = GlobalKey();
+
+  String _selectedCycle = 'monthly'; // 'monthly' or 'yearly'
+  List<SubscriptionPlan> _fetchedPlans = [];
+  bool _isLoadingPlans = true;
+
+  // Fallback default plans
+  static const List<SubscriptionPlan> _defaultPlans = [
+    SubscriptionPlan(
+      id: 'plan_monthly',
+      planName: 'Xenobill Pro — Monthly',
+      description: 'Flexible monthly access to all Xenobill Pro features.',
+      price: 499.0,
+      billingCycle: 'monthly',
+      features: [
+        'Unlimited Invoices & Purchases',
+        'Full Analytics & Smart Insights',
+        'WhatsApp & Email Billing',
+        'Cloud Backup & Multi-device Sync'
+      ],
+      isRecommended: false,
+    ),
+    SubscriptionPlan(
+      id: 'plan_yearly',
+      planName: 'Xenobill Pro — Yearly',
+      description: 'Complete annual access to all Xenobill Pro features with priority support.',
+      price: 4999.0,
+      billingCycle: 'yearly',
+      discountTag: 'Save 17%',
+      features: [
+        'All Pro Monthly Features',
+        'Priority Support & Onboarding',
+        'GST Tax Returns & E-Way Bills',
+        'Custom Invoice Templates'
+      ],
+      isRecommended: true,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSubscriptionPlansAndOffers();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Auto scrolls to the Available Plans section smoothly
+  void _scrollToAvailablePlans() {
+    final ctx = _availablePlansKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    } else if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        320,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// Fetches plans from public.subscription_plans and active offers from public.subscription_offers
+  Future<void> _fetchSubscriptionPlansAndOffers() async {
+    try {
+      final client = SupabaseClientManager.instance.client;
+
+      // 1. Fetch active offers from public.subscription_offers
+      List<SubscriptionOffer> offers = [];
+      try {
+        final offersRes = await client
+            .from('subscription_offers')
+            .select('*')
+            .eq('is_active', true);
+        if ((offersRes as List).isNotEmpty) {
+          offers = (offersRes as List)
+              .map((o) => SubscriptionOffer.fromSupabaseJson(Map<String, dynamic>.from(o as Map)))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint('[SubscriptionPage] Note on fetching subscription_offers: $e');
+      }
+
+      // 2. Fetch plans from public.subscription_plans
+      final plansRes = await client
+          .from('subscription_plans')
+          .select('*')
+          .order('price', ascending: true);
+
+      if ((plansRes as List).isNotEmpty) {
+        final parsed = (plansRes as List).map((map) {
+          final planMap = Map<String, dynamic>.from(map as Map);
+          final planId = planMap['id']?.toString() ?? '';
+          final matchedOffer = offers.firstWhere(
+            (off) => off.planId == planId || off.offerName.toLowerCase().contains(planMap['plan_name']?.toString().toLowerCase() ?? ''),
+            orElse: () => const SubscriptionOffer(id: '', offerName: '', description: '', planId: '', offerPrice: 0, isActive: false),
+          );
+
+          return SubscriptionPlan.fromSupabaseJson(
+            planMap,
+            offer: matchedOffer.isActive ? matchedOffer : null,
+          );
+        }).where((p) => p.isActive).toList();
+
+        if (parsed.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _fetchedPlans = parsed;
+              _isLoadingPlans = false;
+            });
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[SubscriptionPage] Error fetching plans/offers: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _fetchedPlans = _defaultPlans;
+        _isLoadingPlans = false;
+      });
+    }
+  }
+
+  /// Checks internet connectivity prior to triggering payment gateway
+  Future<bool> _checkInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 4));
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,25 +315,22 @@ class SubscriptionPage extends StatelessWidget {
             final transactions = state.transactions;
 
             return SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. CURRENT PLAN SECTION
+                  // 1. CURRENT PLAN CARD
                   _buildCurrentPlanCard(context, details),
                   const SizedBox(height: 24),
 
-                  // 2. AVAILABLE PLANS SECTION
-                  _buildPlansHeader(),
-                  const SizedBox(height: 12),
+                  // 2. AVAILABLE PLANS SECTION WITH COOLER TOGGLE TAB & NO SUBTITLE
+                  _buildPlansHeaderWithCoolerToggle(),
+                  const SizedBox(height: 16),
                   _buildPlansSection(context, details),
                   const SizedBox(height: 24),
 
-                  // 3. PAYMENT MANAGEMENT SECTION
-                  _buildPaymentManagementSection(context, details),
-                  const SizedBox(height: 24),
-
-                  // 4. TRANSACTION / PAYMENT HISTORY SECTION
+                  // 3. TRANSACTION / PAYMENT HISTORY SECTION
                   _buildTransactionHistorySection(context, transactions),
                   const SizedBox(height: 32),
                 ],
@@ -86,14 +348,42 @@ class SubscriptionPage extends StatelessWidget {
   Widget _buildCurrentPlanCard(BuildContext context, SubscriptionDetails details) {
     final status = details.status;
     final isPro = status == SubscriptionStatus.subscriptionActive;
-    final remainingDays = details.remainingTrialDays;
+    final isTrialExpired = status == SubscriptionStatus.trialExpired;
+    final isSubExpired = status == SubscriptionStatus.subscriptionExpired;
+    final isExpired = isTrialExpired || isSubExpired;
+
+    final remainingDays = isPro ? details.remainingSubscriptionDays : details.remainingTrialDays;
 
     String dateLabel = 'Expires On';
-    String dateVal = DateFormat('dd MMM yyyy').format(details.trialEndDate);
+    String dateVal = DateFormat('14 Oct 2026').format(details.trialEndDate);
 
     if (isPro && details.subscriptionEndDate != null) {
       dateLabel = 'Renews On';
       dateVal = DateFormat('dd MMM yyyy').format(details.subscriptionEndDate!);
+    } else if (isSubExpired && details.subscriptionEndDate != null) {
+      dateLabel = 'Expired On';
+      dateVal = DateFormat('dd MMM yyyy').format(details.subscriptionEndDate!);
+    } else if (isTrialExpired) {
+      dateLabel = 'Expired On';
+      dateVal = DateFormat('dd MMM yyyy').format(details.trialEndDate);
+    }
+
+    String statusBadgeText = 'FREE TRIAL ACTIVE';
+    Color badgeBgColor = AppColors.brightCyan;
+    Color badgeTextColor = AppColors.darkNavy;
+
+    if (isPro) {
+      statusBadgeText = 'PRO ACTIVE';
+      badgeBgColor = const Color(0xFF16A34A);
+      badgeTextColor = Colors.white;
+    } else if (isTrialExpired) {
+      statusBadgeText = 'INACTIVE';
+      badgeBgColor = const Color(0xFFEF4444);
+      badgeTextColor = Colors.white;
+    } else if (isSubExpired) {
+      statusBadgeText = 'EXPIRED';
+      badgeBgColor = const Color(0xFFEF4444);
+      badgeTextColor = Colors.white;
     }
 
     return Container(
@@ -113,26 +403,27 @@ class SubscriptionPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header status badge & remaining days
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isPro ? const Color(0xFF16A34A) : AppColors.brightCyan,
+                  color: badgeBgColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  status.displayName.toUpperCase(),
+                  statusBadgeText,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: isPro ? Colors.white : AppColors.darkNavy,
+                    color: badgeTextColor,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
-              if (!isPro)
+              if (!isExpired)
                 Text(
                   '$remainingDays ${remainingDays == 1 ? 'day' : 'days'} left',
                   style: const TextStyle(
@@ -145,8 +436,9 @@ class SubscriptionPage extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
+          // Plan Name
           Text(
-            details.planName,
+            isExpired ? (isTrialExpired ? 'Demo Plan' : details.planName) : details.planName,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -155,31 +447,54 @@ class SubscriptionPage extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
+          // Dates & Status line
           Row(
             children: [
               Text(
                 '$dateLabel: $dateVal',
                 style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Text(
-                'Status: ${details.paymentStatus}',
+                'Status: ${isTrialExpired ? 'expired' : (isPro ? 'active' : 'demo')}',
                 style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
               ),
             ],
           ),
           const SizedBox(height: 18),
 
-          // Action Buttons
-          if (!isPro)
+          // CARD FOOTER ACTIONS / MESSAGES BASED ON STATUS:
+          if (isTrialExpired) ...[
+            // DEMO EXPIRED MESSAGE & AUTO-SCROLL BUTTON
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF7F1D1D).withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.5)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFFFCA5A5), size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Demo is over. Purchase plan to continue.',
+                      style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               height: 46,
               child: ElevatedButton.icon(
-                onPressed: () => _selectPlan(context, 'Monthly Pro', 499.0),
-                icon: const Icon(Icons.bolt, size: 20),
+                onPressed: _scrollToAvailablePlans,
+                icon: const Icon(Icons.arrow_downward_rounded, size: 20),
                 label: const Text(
-                  'Upgrade Now',
+                  'Purchase Plan to Continue',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -188,13 +503,33 @@ class SubscriptionPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-            )
-          else
+            ),
+          ] else if (isSubExpired) ...[
+            // PAID SUBSCRIPTION EXPIRED — RENEW PLAN BUTTON
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: _scrollToAvailablePlans,
+                icon: const Icon(Icons.autorenew_rounded, size: 20),
+                label: Text(
+                  'Renew Plan (${details.planName})',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brightCyan,
+                  foregroundColor: AppColors.darkNavy,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ] else if (isPro) ...[
+            // ACTIVE PRO PLAN ACTIONS
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _showChangePlanModal(context),
+                    onPressed: _scrollToAvailablePlans,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Color(0xFF475569)),
@@ -217,113 +552,208 @@ class SubscriptionPage extends StatelessWidget {
                 ),
               ],
             ),
+          ] else ...[
+            const SizedBox.shrink(),
+          ],
         ],
       ),
     );
   }
 
   // ===========================================================================
-  // 2. PLANS SECTION
+  // 2. PLANS HEADER WITH COOLER TOGGLE TAB (NO SUBTITLE)
   // ===========================================================================
-  Widget _buildPlansHeader() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPlansHeaderWithCoolerToggle() {
+    return Row(
+      key: _availablePlansKey,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
+        const Text(
           'Available Plans',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
         ),
-        SizedBox(height: 2),
-        Text(
-          'Choose the perfect plan for your business needs',
-          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+
+        // COOLER TABS (PILL SWITCH DESIGN)
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE2E8F0),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Row(
+            children: [
+              _buildCoolerTabButton(
+                label: 'Monthly',
+                value: 'monthly',
+                icon: Icons.calendar_view_month_rounded,
+              ),
+              const SizedBox(width: 4),
+              _buildCoolerTabButton(
+                label: 'Yearly',
+                value: 'yearly',
+                icon: Icons.workspace_premium_rounded,
+                badge: '17% OFF',
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCoolerTabButton({
+    required String label,
+    required String value,
+    required IconData icon,
+    String? badge,
+  }) {
+    final isSelected = _selectedCycle == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedCycle = value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.darkNavy : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.darkNavy.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? AppColors.brightCyan : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : const Color(0xFF64748B),
+              ),
+            ),
+            if (badge != null && !isSelected) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.green.shade800),
+                ),
+              ),
+            ]
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildPlansSection(BuildContext context, SubscriptionDetails details) {
     final currentPlan = details.planName;
 
+    if (_isLoadingPlans) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final activePlans = (_fetchedPlans.isNotEmpty ? _fetchedPlans : _defaultPlans)
+        .where((p) => p.billingCycle == _selectedCycle)
+        .toList();
+
     return Column(
       children: [
-        // Free / Demo Plan Card
-        _buildPlanTile(
-          context: context,
-          title: 'Free Trial / Demo',
-          price: '₹0',
-          period: '7 Days',
-          features: ['Basic POS & Invoicing', 'Customer Ledger', 'Standard Receipts'],
-          isCurrent: currentPlan.contains('Trial') || currentPlan.contains('Demo'),
-          onSelect: null,
-        ),
-        const SizedBox(height: 12),
+        ...activePlans.map((plan) {
+          final isCurrent = currentPlan.toLowerCase().replaceAll(' ', '') == plan.planName.toLowerCase().replaceAll(' ', '');
 
-        // Monthly Pro Card
-        _buildPlanTile(
-          context: context,
-          title: 'Xenobill Pro — Monthly',
-          price: '₹499',
-          period: '/ month',
-          features: ['Unlimited Invoices & Purchases', 'Full Analytics & Smart Insights', 'WhatsApp & Email Billing', 'Cloud Backup & Multi-device Sync'],
-          isCurrent: currentPlan.contains('Monthly'),
-          onSelect: () => _selectPlan(context, 'Xenobill Pro Monthly', 499.0),
-        ),
-        const SizedBox(height: 12),
-
-        // Yearly Pro Card (RECOMMENDED)
-        _buildPlanTile(
-          context: context,
-          title: 'Xenobill Pro — Yearly',
-          price: '₹4,999',
-          period: '/ year (Save 17%)',
-          features: ['All Pro Monthly Features', 'Priority Support & Onboarding', 'GST Tax Returns & E-Way Bills', 'Custom Invoice Templates'],
-          isRecommended: true,
-          isCurrent: currentPlan.contains('Yearly'),
-          onSelect: () => _selectPlan(context, 'Xenobill Pro Yearly', 4999.0),
-        ),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14.0),
+            child: _buildUnifiedPlanTile(
+              context: context,
+              plan: plan,
+              isCurrent: isCurrent,
+              onSelect: () => _handlePlanSelection(context, plan),
+            ),
+          );
+        }),
       ],
     );
   }
 
-  Widget _buildPlanTile({
+  /// Unified Card Widget for both Monthly and Yearly Plans with Cloud Description & Offers
+  Widget _buildUnifiedPlanTile({
     required BuildContext context,
-    required String title,
-    required String price,
-    required String period,
-    required List<String> features,
-    bool isRecommended = false,
+    required SubscriptionPlan plan,
     bool isCurrent = false,
     VoidCallback? onSelect,
   }) {
+    final isRecommended = plan.isRecommended;
+    final hasOffer = plan.activeOffer != null;
+    final finalPriceVal = plan.finalPrice;
+    final strikethroughPriceVal = plan.strikethroughPrice;
+
+    final periodText = plan.billingCycle == 'yearly'
+        ? '/ year ${plan.discountTag != null ? '(${plan.discountTag})' : ''}'
+        : '/ month';
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isRecommended
               ? AppColors.brightCyan
               : (isCurrent ? AppColors.darkNavy : const Color(0xFFE2E8F0)),
-          width: isRecommended || isCurrent ? 2 : 1,
+          width: isRecommended || isCurrent ? 2.2 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isRecommended
+                ? AppColors.brightCyan.withValues(alpha: 0.12)
+                : Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title & Recommendation Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Text(
-                    title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    plan.planName,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                   ),
                   if (isRecommended) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.brightCyan.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
@@ -337,46 +767,100 @@ class SubscriptionPage extends StatelessWidget {
                 ],
               ),
               if (isCurrent)
-                const Icon(Icons.check_circle, color: AppColors.darkNavy, size: 20),
+                const Icon(Icons.check_circle, color: AppColors.darkNavy, size: 22),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
+          // Cloud Description text
+          if (plan.description.isNotEmpty) ...[
+            Text(
+              plan.description,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B), height: 1.35),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // Active Offer Banner (from public.subscription_offers)
+          if (hasOffer) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_offer_rounded, color: Color(0xFFD97706), size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${plan.activeOffer!.offerName}${plan.activeOffer!.description.isNotEmpty ? ' - ${plan.activeOffer!.description}' : ''}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Price row with Strikethrough if offer or original price exists
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
+              if (strikethroughPriceVal != null && strikethroughPriceVal > finalPriceVal) ...[
+                Text(
+                  CurrencyFormatter.format(strikethroughPriceVal),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF94A3B8),
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Text(
-                price,
+                CurrencyFormatter.format(finalPriceVal),
                 style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
               ),
               const SizedBox(width: 4),
               Text(
-                period,
+                periodText,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          ...features.map((f) => Padding(
+          // Features List
+          ...plan.features.map((f) => Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.check, size: 16, color: Color(0xFF16A34A)),
+                    const Icon(Icons.check_circle_outline, size: 17, color: Color(0xFF16A34A)),
                     const SizedBox(width: 8),
-                    Text(f, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                    Expanded(
+                      child: Text(
+                        f,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF334155)),
+                      ),
+                    ),
                   ],
                 ),
               )),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
+          // Action Button
           if (!isCurrent && onSelect != null)
             SizedBox(
               width: double.infinity,
-              height: 42,
+              height: 44,
               child: ElevatedButton(
                 onPressed: onSelect,
                 style: ElevatedButton.styleFrom(
@@ -386,7 +870,7 @@ class SubscriptionPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
-                  'Select $title',
+                  'Select ${plan.planName}',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -411,67 +895,7 @@ class SubscriptionPage extends StatelessWidget {
   }
 
   // ===========================================================================
-  // 3. PAYMENT MANAGEMENT SECTION
-  // ===========================================================================
-  Widget _buildPaymentManagementSection(BuildContext context, SubscriptionDetails details) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Payment Method & Billing',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 12),
-
-          _buildBillingInfoRow('Current Method', details.paymentMethod),
-          _buildBillingInfoRow('Payment Status', details.paymentStatus),
-          if (details.subscriptionEndDate != null)
-            _buildBillingInfoRow('Next Billing Date', DateFormat('dd MMM yyyy').format(details.subscriptionEndDate!)),
-
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _showUpdatePaymentMethodDialog(context),
-                  icon: const Icon(Icons.payment_outlined, size: 16),
-                  label: const Text('Update Payment Method'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBillingInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-        ],
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // 4. TRANSACTION HISTORY SECTION
+  // 3. TRANSACTION HISTORY SECTION
   // ===========================================================================
   Widget _buildTransactionHistorySection(BuildContext context, List<SubscriptionTransaction> transactions) {
     return Container(
@@ -561,71 +985,267 @@ class SubscriptionPage extends StatelessWidget {
   }
 
   // ===========================================================================
-  // ACTION MODALS & DIALOGS
+  // INTERNET CHECK & BOTTOMSHEET PURCHASE FLOW
   // ===========================================================================
-  void _selectPlan(BuildContext context, String planName, double amount) {
-    String selectedMethod = 'UPI (GPay / PhonePe)';
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Purchase $planName', style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Future<void> _handlePlanSelection(BuildContext context, SubscriptionPlan plan) async {
+    final messenger = ScaffoldMessenger.of(context);
+    // 1. Check internet availability
+    final hasInternet = await _checkInternet();
+    if (!hasInternet) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Row(
             children: [
-              Text('Total Amount: ${CurrencyFormatter.format(amount)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
-              const SizedBox(height: 16),
-              const Text('Select Payment Method:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: selectedMethod,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'UPI (GPay / PhonePe)', child: Text('UPI (GPay / PhonePe / Paytm)')),
-                  DropdownMenuItem(value: 'Credit / Debit Card', child: Text('Credit / Debit Card')),
-                  DropdownMenuItem(value: 'Netbanking', child: Text('Netbanking')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setState(() => selectedMethod = val);
-                },
+              Icon(Icons.wifi_off_rounded, color: Colors.white),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text('No internet connection. Please check your network and try again.'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogCtx);
-                context.read<SubscriptionBloc>().add(PurchasePlanEvent(
-                      planName: planName,
-                      amount: amount,
-                      paymentMethod: selectedMethod,
-                    ));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Successfully upgraded to $planName!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.brightCyan, foregroundColor: AppColors.darkNavy),
-              child: const Text('Confirm & Pay', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
+      );
+      return;
+    }
+
+    // 2. Open Purchase BottomSheet
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetCtx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        plan.planName,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(bottomSheetCtx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Price Summary Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Billing Cycle', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text(
+                            plan.billingCycle.toUpperCase(),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('Total Amount', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text(
+                            CurrencyFormatter.format(plan.finalPrice),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Included Features
+                const Text(
+                  'Included in this plan:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                ),
+                const SizedBox(height: 8),
+                ...plan.features.map((f) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(f, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                          ),
+                        ],
+                      ),
+                    )),
+                const SizedBox(height: 24),
+
+                // Continue Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(bottomSheetCtx);
+                      _processRazorpayPayment(context, plan);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.brightCyan,
+                      foregroundColor: AppColors.darkNavy,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Continue to Payment',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  void _showChangePlanModal(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Select an available plan from the list below to switch'), behavior: SnackBarBehavior.floating),
+  /// Simulated Razorpay Payment Gateway integration with loading and success states
+  Future<void> _processRazorpayPayment(BuildContext context, SubscriptionPlan plan) async {
+    // 1. Show Razorpay Gateway Loading Overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: AppColors.brightCyan),
+                const SizedBox(height: 20),
+                const Text(
+                  'Connecting to Razorpay...',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Processing payment of ${CurrencyFormatter.format(plan.finalPrice)}',
+                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    final nav = Navigator.of(context, rootNavigator: true);
+    final bloc = context.read<SubscriptionBloc>();
+
+    // 2. Simulate Razorpay Gateway Response (1.5s delay)
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (!mounted) return;
+    nav.pop(); // Dismiss loading
+
+    // 3. Dispatch purchase event to SubscriptionBloc
+    bloc.add(PurchasePlanEvent(
+          planName: plan.planName,
+          amount: plan.finalPrice,
+          paymentMethod: 'Razorpay Online',
+        ));
+
+    // 4. Show Payment Success Modal
+    showDialog(
+      context: context,
+      builder: (successCtx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFDCFCE7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF16A34A),
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Payment Successful!',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkNavy),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your ${plan.planName} subscription is now active.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(successCtx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.darkNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -634,7 +1254,9 @@ class SubscriptionPage extends StatelessWidget {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Cancel Subscription?'),
-        content: const Text('Are you sure you want to cancel your Xenobill Pro subscription? Your account will switch to Demo Mode at the end of the billing period.'),
+        content: const Text(
+          'Are you sure you want to cancel your Xenobill Pro subscription? Your account will switch to Demo Mode at the end of the billing period.',
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Keep Subscription')),
           TextButton(
@@ -652,12 +1274,6 @@ class SubscriptionPage extends StatelessWidget {
     );
   }
 
-  void _showUpdatePaymentMethodDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Payment method settings updated successfully'), behavior: SnackBarBehavior.floating),
-    );
-  }
-
   void _showReceiptModal(BuildContext context, SubscriptionTransaction tx) {
     showDialog(
       context: context,
@@ -668,7 +1284,7 @@ class SubscriptionPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Transaction ID: ${tx.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('Transaction ID: ${tx.id.length > 8 ? tx.id.substring(0, 8).toUpperCase() : tx.id}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const Divider(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Plan'), Text(tx.planName, style: const TextStyle(fontWeight: FontWeight.bold))]),
             const SizedBox(height: 6),
