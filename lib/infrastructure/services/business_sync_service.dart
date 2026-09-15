@@ -163,9 +163,9 @@ class BusinessSyncService {
         );
         AppDatabase.instance.subscriptionDetails = subDetails;
         await AppDatabase.instance.saveSubscriptionDetails(subDetails);
-        debugPrint('[BusinessSyncService] Cloud business_plan loaded: ${subDetails.planName} (${subDetails.status.displayName})');
+        debugPrint('[BusinessSyncService] Cloud business_plans loaded: ${subDetails.planName} (${subDetails.status.displayName})');
       } else {
-        // Create initial demo plan in business_plans if missing
+        // Create initial demo plan in public.business_plans if missing
         final now = DateTime.now();
         final defaultPlan = SubscriptionDetails.initialForUser(userId);
         final initialPlanMap = {
@@ -196,8 +196,7 @@ class BusinessSyncService {
         await AppDatabase.instance.saveSubscriptionDetails(defaultPlan);
       }
     } catch (e) {
-      debugPrint('[BusinessSyncService] Error syncing business_plan: $e');
+      debugPrint('[BusinessSyncService] Error syncing business_plans: $e');
     }
   }
 }
-

@@ -75,12 +75,25 @@ class SubscriptionDetails extends Equatable {
     this.paymentStatus = 'Free Trial',
   });
 
-  /// Calculates remaining trial days based on current system time
-  int get remainingTrialDays {
+  /// Calculates remaining days until targetDate reset at 12:00 AM IST (Indian Standard Time)
+  static int calculateRemainingDaysIST(DateTime targetDate) {
     final now = DateTime.now();
-    if (now.isAfter(trialEndDate)) return 0;
-    final diff = trialEndDate.difference(now).inDays;
-    return diff < 0 ? 0 : diff + 1;
+    final nowUtc = now.isUtc ? now : now.toUtc();
+    final nowIst = nowUtc.add(const Duration(hours: 5, minutes: 30));
+    final todayMidnightIst = DateTime.utc(nowIst.year, nowIst.month, nowIst.day);
+
+    final targetUtc = targetDate.isUtc ? targetDate : targetDate.toUtc();
+    final targetIst = targetUtc.add(const Duration(hours: 5, minutes: 30));
+    final targetMidnightIst = DateTime.utc(targetIst.year, targetIst.month, targetIst.day);
+
+    if (todayMidnightIst.isAfter(targetMidnightIst)) return 0;
+    final diff = targetMidnightIst.difference(todayMidnightIst).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+
+  /// Calculates remaining trial days based on current system time with 12 AM IST reset
+  int get remainingTrialDays {
+    return calculateRemainingDaysIST(trialEndDate);
   }
 
   /// Calculates total trial duration in days
@@ -89,13 +102,10 @@ class SubscriptionDetails extends Equatable {
     return diff <= 0 ? 30 : diff;
   }
 
-  /// Calculates remaining active subscription days based on current system time
+  /// Calculates remaining active subscription days based on current system time with 12 AM IST reset
   int get remainingSubscriptionDays {
     if (subscriptionEndDate == null) return 0;
-    final now = DateTime.now();
-    if (now.isAfter(subscriptionEndDate!)) return 0;
-    final diff = subscriptionEndDate!.difference(now).inDays;
-    return diff < 0 ? 0 : diff + 1;
+    return calculateRemainingDaysIST(subscriptionEndDate!);
   }
 
   /// Checks if 5+ hours have elapsed since last reminder modal popup dismissal
@@ -188,7 +198,7 @@ class SubscriptionDetails extends Equatable {
 
     final demoStart = json['demo_start_at'] != null ? DateTime.tryParse(json['demo_start_at'].toString()) ?? now : now;
     final demoEnd = json['demo_end_at'] != null ? DateTime.tryParse(json['demo_end_at'].toString()) ?? now.add(const Duration(days: 30)) : now.add(const Duration(days: 30));
-    final startDate = json['start_date'] != null ? DateTime.tryParse(json['start_date'].toString()) : null;
+    final startDate = (!isDemo && json['start_date'] != null) ? DateTime.tryParse(json['start_date'].toString()) : null;
     final dueDate = json['due_date'] != null ? DateTime.tryParse(json['due_date'].toString()) : null;
 
     SubscriptionStatus computedStatus;

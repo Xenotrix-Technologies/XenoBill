@@ -137,7 +137,7 @@ class AppRouter {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/subscription',
-        builder: (context, state) => const MainLayoutPage(child: SubscriptionPage()),
+        builder: (context, state) => const SubscriptionPage(),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

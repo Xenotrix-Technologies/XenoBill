@@ -121,8 +121,12 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           planPayload['current_plan_price'] = event.amount;
           planPayload['billing_cycle'] = isYearly ? 'yearly' : 'monthly';
           planPayload['gateway'] = event.paymentMethod;
+          planPayload['is_demo_user'] = false;
+          planPayload['subscription_status'] = 'active';
 
-          await client.from('business_plans').upsert(planPayload, onConflict: 'user_id');
+          try {
+            await client.from('business_plans').upsert(planPayload, onConflict: 'user_id');
+          } catch (_) {}
         }
       } catch (_) {}
 
