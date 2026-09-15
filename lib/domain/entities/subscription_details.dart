@@ -243,6 +243,7 @@ class SubscriptionDetails extends Equatable {
 
     return {
       'user_id': userId,
+      'plan_id': (businessId != null && RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(businessId!)) ? businessId : null,
       'plan_name': planName,
       'company_name': companyName,
       'is_demo_user': isDemo,

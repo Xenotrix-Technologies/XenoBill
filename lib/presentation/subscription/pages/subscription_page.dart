@@ -1282,6 +1282,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           amount: amountToCharge,
           paymentMethod: 'Razorpay Online',
           billingCycle: plan.billingCycle,
+          planId: plan.id,
         ));
 
     if (!mounted) return;

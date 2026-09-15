@@ -90,9 +90,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       final duration =
           isYearly ? const Duration(days: 365) : const Duration(days: 30);
 
+      final isPlanUuid = event.planId != null &&
+          RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(event.planId!);
+
       final updatedDetails = current.details.copyWith(
         status: SubscriptionStatus.subscriptionActive,
         planName: event.planName,
+        businessId: isPlanUuid ? event.planId : current.details.businessId,
         subscriptionStartDate: now,
         subscriptionEndDate: now.add(duration),
         paymentMethod: event.paymentMethod,
@@ -125,6 +130,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           final planPayload = updatedDetails.toBusinessPlanJson(
             companyName: AppDatabase.instance.currentBusiness?.name,
           );
+          if (isPlanUuid) {
+            planPayload['plan_id'] = event.planId;
+          }
           planPayload['current_plan_price'] = event.amount;
           planPayload['billing_cycle'] =
               duration.inDays == 365 ? 'yearly' : 'monthly';
