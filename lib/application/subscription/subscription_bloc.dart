@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/subscription_details.dart';
@@ -24,11 +26,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(SubscriptionLoading());
 
     SubscriptionDetails? details = AppDatabase.instance.subscriptionDetails;
-    List<SubscriptionTransaction> transactions = AppDatabase.instance.subscriptionTransactions;
+    List<SubscriptionTransaction> transactions =
+        AppDatabase.instance.subscriptionTransactions;
 
-    if (details == null) {
-      details = SubscriptionDetails.initialForUser(event.userId, businessId: event.businessId);
-    }
+    details ??= SubscriptionDetails.initialForUser(event.userId,
+        businessId: event.businessId);
 
     final activeDetails = details;
 
@@ -80,11 +82,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PurchasePlanEvent event,
     Emitter<SubscriptionState> emit,
   ) async {
+    log(event.paymentMethod);
     if (state is SubscriptionLoaded) {
       final current = (state as SubscriptionLoaded);
       final now = DateTime.now();
       final isYearly = event.planName.toLowerCase().contains('yearly');
-      final duration = isYearly ? const Duration(days: 365) : const Duration(days: 30);
+      final duration =
+          isYearly ? const Duration(days: 365) : const Duration(days: 30);
 
       final updatedDetails = current.details.copyWith(
         status: SubscriptionStatus.subscriptionActive,
@@ -98,7 +102,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       final newTransaction = SubscriptionTransaction(
         id: const Uuid().v4(),
-        businessId: AppDatabase.instance.currentBusiness?.id ?? current.details.businessId ?? current.details.userId,
+        businessId: AppDatabase.instance.currentBusiness?.id ??
+            current.details.businessId ??
+            current.details.userId,
         date: now,
         planName: event.planName,
         amount: event.amount,
@@ -109,7 +115,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       final updatedTransactions = [newTransaction, ...current.transactions];
 
       await AppDatabase.instance.saveSubscriptionDetails(updatedDetails);
-      await AppDatabase.instance.saveSubscriptionTransactions(updatedTransactions);
+      await AppDatabase.instance
+          .saveSubscriptionTransactions(updatedTransactions);
 
       try {
         final client = SupabaseClientManager.instance.client;
@@ -119,13 +126,29 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             companyName: AppDatabase.instance.currentBusiness?.name,
           );
           planPayload['current_plan_price'] = event.amount;
-          planPayload['billing_cycle'] = isYearly ? 'yearly' : 'monthly';
-          planPayload['gateway'] = event.paymentMethod;
+          planPayload['billing_cycle'] =
+              duration.inDays == 365 ? 'yearly' : 'monthly';
+          String? formattedGateway;
+          final pmLower = event.paymentMethod.toLowerCase().trim();
+          if (pmLower.contains('razorpay')) {
+            formattedGateway = 'razorpay';
+          } else if (pmLower.contains('cashfree')) {
+            formattedGateway = 'cashfree';
+          } else if (pmLower.contains('manual')) {
+            formattedGateway = 'manual';
+          } else if (['razorpay', 'cashfree', 'manual'].contains(pmLower)) {
+            formattedGateway = pmLower;
+          }
+
+          planPayload['gateway'] = formattedGateway;
           planPayload['is_demo_user'] = false;
           planPayload['subscription_status'] = 'active';
+          planPayload['demo_status'] = 'cancelled';
 
           try {
-            await client.from('business_plans').upsert(planPayload, onConflict: 'user_id');
+            await client
+                .from('business_plans')
+                .upsert(planPayload, onConflict: 'user_id');
           } catch (_) {}
         }
       } catch (_) {}

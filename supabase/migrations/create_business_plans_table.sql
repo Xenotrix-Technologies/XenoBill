@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.business_plans (
     currency TEXT DEFAULT 'INR',
     plan_details JSONB DEFAULT '{}'::jsonb,
     is_demo_user BOOLEAN DEFAULT true,
-    demo_status TEXT DEFAULT 'active',
+    demo_status TEXT DEFAULT 'running',
     demo_start_at TIMESTAMPTZ DEFAULT now(),
     demo_end_at TIMESTAMPTZ DEFAULT (now() + interval '30 days'),
     subscription_status TEXT DEFAULT 'demo',
@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS public.business_plans (
     subscription_source TEXT,
     gateway TEXT,
     gateway_customer_id TEXT,
-    gateway_subscription_id TEXT
+    gateway_subscription_id TEXT,
+    CONSTRAINT check_demo_status CHECK (demo_status = ANY (ARRAY['not_started'::text, 'running'::text, 'expired'::text, 'cancelled'::text])),
+    CONSTRAINT check_gateway CHECK (gateway IS NULL OR (gateway = ANY (ARRAY['razorpay'::text, 'cashfree'::text, 'manual'::text])))
 );
 
 -- 2. Enable Row Level Security (RLS)
@@ -136,7 +138,7 @@ BEGIN
     'INR',
     '{}'::jsonb,
     true,
-    'active',
+    'running',
     NOW(),
     NOW() + INTERVAL '30 days',
     'demo',

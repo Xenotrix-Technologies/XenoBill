@@ -25,15 +25,17 @@ class PurchasePlanEvent extends SubscriptionEvent {
   final String planName; // 'Monthly Pro', 'Yearly Pro'
   final double amount;
   final String paymentMethod; // 'UPI', 'Credit Card', 'Netbanking'
+  final String? billingCycle; // 'monthly', 'yearly'
 
   const PurchasePlanEvent({
     required this.planName,
     required this.amount,
     required this.paymentMethod,
+    this.billingCycle,
   });
 
   @override
-  List<Object?> get props => [planName, amount, paymentMethod];
+  List<Object?> get props => [planName, amount, paymentMethod, billingCycle];
 }
 
 class CancelSubscriptionEvent extends SubscriptionEvent {}

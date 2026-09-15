@@ -246,7 +246,7 @@ class SubscriptionDetails extends Equatable {
       'plan_name': planName,
       'company_name': companyName,
       'is_demo_user': isDemo,
-      'demo_status': status == SubscriptionStatus.trialExpired ? 'expired' : 'active',
+      'demo_status': isPaid ? 'cancelled' : (status == SubscriptionStatus.trialExpired ? 'expired' : 'running'),
       'demo_start_at': trialStartDate.toIso8601String(),
       'demo_end_at': trialEndDate.toIso8601String(),
       'subscription_status': isPaid ? 'active' : (status == SubscriptionStatus.trialExpired ? 'expired' : 'demo'),

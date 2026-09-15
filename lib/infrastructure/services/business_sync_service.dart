@@ -177,7 +177,7 @@ class BusinessSyncService {
           'currency': 'INR',
           'plan_details': {},
           'is_demo_user': true,
-          'demo_status': 'active',
+          'demo_status': 'running',
           'demo_start_at': now.toIso8601String(),
           'demo_end_at': now.add(const Duration(days: 30)).toIso8601String(),
           'subscription_status': 'demo',
