@@ -105,14 +105,25 @@ class SubscriptionPlan {
     final isYearly = cycleStr.contains('year');
     final rawOrigPrice = (json['original_price'] as num?)?.toDouble();
 
+    final planNameStr = json['plan_name']?.toString() ?? json['name']?.toString() ?? (isYearly ? 'Xenobill Yearly' : 'Xenobill Monthly');
+    final planNameLower = planNameStr.toLowerCase();
+    final is3Year = planNameLower.contains('3 year') || planNameLower.contains('3 yr') || planNameLower.contains('3yr') || planNameLower.contains('3 yrs');
+
+    bool recommended = json['is_recommended'] == true || json['is_popular'] == true;
+    if (json['is_recommended'] == null && json['is_popular'] == null) {
+      recommended = isYearly && !is3Year;
+    } else if (is3Year) {
+      recommended = false;
+    }
+
     return SubscriptionPlan(
       id: json['id']?.toString() ?? '',
-      planName: json['plan_name']?.toString() ?? json['name']?.toString() ?? (isYearly ? 'Xenobill Yearly' : 'Xenobill Monthly'),
+      planName: planNameStr,
       description: json['description']?.toString() ?? (isYearly ? 'Complete annual access to all Xenobill Pro features with priority support.' : 'Flexible monthly access to all Xenobill Pro features.'),
       price: ((json['price'] ?? json['amount'] ?? (isYearly ? 4999.0 : 399.0)) as num).toDouble(),
       billingCycle: isYearly ? 'yearly' : 'monthly',
       originalPrice: rawOrigPrice ?? (isYearly ? null : 399.0),
-      discountTag: json['discount_tag']?.toString() ?? (isYearly ? 'Save 17%' : null),
+      discountTag: json['discount_tag']?.toString(),
       features: parsedFeatures.isNotEmpty
           ? parsedFeatures
           : (isYearly
@@ -128,7 +139,7 @@ class SubscriptionPlan {
                   'WhatsApp & Email Billing',
                   'Cloud Backup & Multi-device Sync'
                 ]),
-      isRecommended: json['is_recommended'] == true || json['is_popular'] == true || isYearly,
+      isRecommended: recommended,
       isActive: json['is_active'] != false,
       activeOffer: offer,
     );
@@ -486,15 +497,19 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
                   // 1. CURRENT PLAN CARD
                   _buildCurrentPlanCard(context, details),
+                  const SizedBox(height: 20),
+
+                  // 2. PREMIUM FEATURES CARD ABOVE AVAILABLE PLANS
+                  _buildPremiumFeaturesCard(),
                   const SizedBox(height: 24),
 
-                  // 2. AVAILABLE PLANS SECTION WITH CENTERED TOGGLE TAB
+                  // 3. AVAILABLE PLANS SECTION WITH CENTERED TOGGLE TAB
                   _buildPlansHeaderWithCoolerToggle(),
                   const SizedBox(height: 16),
                   _buildPlansSection(context, details, transactions),
                   const SizedBox(height: 24),
 
-                  // 3. TRANSACTION / PAYMENT HISTORY SECTION
+                  // 4. TRANSACTION / PAYMENT HISTORY SECTION
                   _buildTransactionHistorySection(context, transactions),
                   const SizedBox(height: 32),
                 ],
@@ -693,6 +708,85 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ===========================================================================
+  // PREMIUM FEATURES HIGHLIGHT CARD (SHOWN ABOVE AVAILABLE PLANS)
+  // ===========================================================================
+  Widget _buildPremiumFeaturesCard() {
+    final features = [
+      'Unlimited Invoices & Purchases',
+      'Full Analytics & Smart Insights',
+      'Customer Khata Details',
+      'Cloud Backup & Multi-device Sync',
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.brightCyan.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.star_rounded, color: AppColors.darkNavy, size: 18),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'All Pro Features Included',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 14),
+          ...features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF16A34A)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
   // 2. CENTERED PLANS HEADER WITH SIMPLE TOGGLE TAB (NO ICONS, NO PERCENTAGE OFF)
   // ===========================================================================
   Widget _buildPlansHeaderWithCoolerToggle() {
@@ -853,17 +947,35 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     bool isOfferEligible = false,
     VoidCallback? onSelect,
   }) {
-    final isRecommended = plan.isRecommended;
+    final planNameLower = plan.planName.toLowerCase();
+    final is3YearPlan = planNameLower.contains('3 year') ||
+        planNameLower.contains('3 yr') ||
+        planNameLower.contains('3yr') ||
+        planNameLower.contains('3 yrs');
+    final isRecommended = plan.isRecommended && !is3YearPlan;
     final bool showOffer = isOfferEligible && plan.activeOffer != null && plan.activeOffer!.isActive;
 
     final finalPriceVal = showOffer ? plan.activeOffer!.offerPrice : plan.price;
     final double? strikethroughPriceVal = showOffer ? plan.price : plan.originalPrice;
 
-    final periodText = plan.billingCycle == 'yearly'
-        ? '/ year ${plan.discountTag != null ? '(${plan.discountTag})' : ''}'
-        : (plan.planName.toLowerCase().contains('3 month')
-            ? '/ 3 months'
-            : (plan.planName.toLowerCase().contains('6 month') ? '/ 6 months' : '/ month'));
+    final String periodText;
+    if (plan.billingCycle == 'yearly') {
+      if (is3YearPlan) {
+        periodText = '/ 3 yr';
+      } else if (planNameLower.contains('2 year') || planNameLower.contains('2 yr') || planNameLower.contains('2yr')) {
+        periodText = '/ 2 yr';
+      } else {
+        periodText = '/ yr';
+      }
+    } else {
+      if (planNameLower.contains('3 month')) {
+        periodText = '/ 3 months';
+      } else if (planNameLower.contains('6 month')) {
+        periodText = '/ 6 months';
+      } else {
+        periodText = '/ month';
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -961,54 +1073,33 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             ),
           ],
 
-          // Price row with Strikethrough if offer exists
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          // Price row with Strikethrough if offer exists (Wrap prevents right overflow)
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
             children: [
               if (strikethroughPriceVal != null && strikethroughPriceVal > finalPriceVal) ...[
                 Text(
                   CurrencyFormatter.format(strikethroughPriceVal),
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF94A3B8),
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
-                const SizedBox(width: 8),
               ],
               Text(
                 CurrencyFormatter.format(finalPriceVal),
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
               ),
-              const SizedBox(width: 4),
               Text(
                 periodText,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 14),
-
-          // Features List
-          ...plan.features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 17, color: Color(0xFF16A34A)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        f,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF334155)),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
           const SizedBox(height: 16),
 
           // Action Button
