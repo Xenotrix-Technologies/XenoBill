@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/business.dart';
 import '../../domain/entities/business_type.dart';
 import '../../domain/entities/subscription_details.dart';
+import '../../domain/entities/subscription_transaction.dart';
 import '../database/app_database.dart';
 import '../datasources/business_local_data_source.dart';
 import '../supabase/supabase_client.dart';
@@ -164,6 +165,26 @@ class BusinessSyncService {
         AppDatabase.instance.subscriptionDetails = subDetails;
         await AppDatabase.instance.saveSubscriptionDetails(subDetails);
         debugPrint('[BusinessSyncService] Cloud business_plans loaded: ${subDetails.planName} (${subDetails.status.displayName})');
+
+        try {
+          final accountRes = await client.from('accounts').select('id').eq('user_id', userId).maybeSingle();
+          final accountId = accountRes?['id']?.toString() ?? userId;
+          final historyRes = await client
+              .from('purchase_history')
+              .select('*')
+              .eq('business_id', accountId)
+              .order('purchase_date', ascending: false);
+
+          if (historyRes.isNotEmpty) {
+            final txs = historyRes
+                .map((e) => SubscriptionTransaction.fromPurchaseHistoryJson(Map<String, dynamic>.from(e as Map)))
+                .toList();
+            await AppDatabase.instance.saveSubscriptionTransactions(txs);
+            debugPrint('[BusinessSyncService] Cloud purchase_history loaded (${txs.length} transactions)');
+          }
+        } catch (e) {
+          debugPrint('[BusinessSyncService] Error fetching purchase_history: $e');
+        }
       } else {
         // Create initial demo plan in public.business_plans if missing
         final now = DateTime.now();

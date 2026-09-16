@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/route_constants.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../presentation/auth/pages/welcome_page.dart';
 import '../../presentation/auth/pages/register_page.dart';
-import '../../domain/entities/business_type.dart';
+
 import '../../domain/entities/item.dart';
 import '../../domain/entities/customer.dart';
 import '../../presentation/main_layout/main_layout_page.dart';
@@ -34,7 +33,8 @@ import '../../presentation/customers/pages/customer_profile_page.dart';
 class AppRouter {
   AppRouter._();
 
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'rootNav');
+  static final _rootNavigatorKey =
+      GlobalKey<NavigatorState>(debugLabel: 'rootNav');
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -59,7 +59,6 @@ class AppRouter {
 
       return null;
     },
-
     routes: [
       GoRoute(
         path: RouteConstants.welcome,
@@ -101,7 +100,8 @@ class AppRouter {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: RouteConstants.customers,
-        builder: (context, state) => const MainLayoutPage(child: CustomersPage()),
+        builder: (context, state) =>
+            const MainLayoutPage(child: CustomersPage()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
@@ -127,12 +127,14 @@ class AppRouter {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/expenses',
-        builder: (context, state) => const MainLayoutPage(child: ExpensesPage()),
+        builder: (context, state) =>
+            const MainLayoutPage(child: ExpensesPage()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/smart',
-        builder: (context, state) => const MainLayoutPage(child: SmartInsightsPage()),
+        builder: (context, state) =>
+            const MainLayoutPage(child: SmartInsightsPage()),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
@@ -211,4 +213,3 @@ class AppRouter {
     ],
   );
 }
-

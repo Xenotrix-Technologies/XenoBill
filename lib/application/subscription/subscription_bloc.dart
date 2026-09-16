@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/subscription_details.dart';
 import '../../domain/entities/subscription_transaction.dart';
@@ -19,6 +20,22 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<StartReTrialEvent>(_onStartReTrial);
   }
 
+  Future<String> _getBusinessAccountId(
+      SupabaseClient client, String userId) async {
+    try {
+      final res = await client
+          .from('accounts')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (res != null && res['user_id'] != null) {
+        return res['user_id'].toString();
+      }
+    } catch (_) {}
+
+    return userId;
+  }
+
   Future<void> _onLoadSubscription(
     LoadSubscriptionEvent event,
     Emitter<SubscriptionState> emit,
@@ -28,6 +45,29 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     SubscriptionDetails? details = AppDatabase.instance.subscriptionDetails;
     List<SubscriptionTransaction> transactions =
         AppDatabase.instance.subscriptionTransactions;
+
+    try {
+      final client = SupabaseClientManager.instance.client;
+      final user = client.auth.currentUser;
+      if (user != null) {
+        final businessAccountId = await _getBusinessAccountId(client, user.id);
+        final cloudHistory = await client
+            .from('purchase_history')
+            .select('*')
+            .eq('business_id', businessAccountId)
+            .order('purchase_date', ascending: false);
+
+        if (cloudHistory.isNotEmpty) {
+          final cloudTxs = cloudHistory
+              .map((e) => SubscriptionTransaction.fromPurchaseHistoryJson(
+                  Map<String, dynamic>.from(e as Map)))
+              .toList();
+          transactions = cloudTxs;
+        }
+      }
+    } catch (e) {
+      log('Error fetching purchase_history: $e');
+    }
 
     details ??= SubscriptionDetails.initialForUser(event.userId,
         businessId: event.businessId);
@@ -127,6 +167,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         final client = SupabaseClientManager.instance.client;
         final user = client.auth.currentUser;
         if (user != null) {
+          final businessAccountId =
+              await _getBusinessAccountId(client, user.id);
+
           final planPayload = updatedDetails.toBusinessPlanJson(
             companyName: AppDatabase.instance.currentBusiness?.name,
           );
@@ -158,6 +201,22 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
                 .from('business_plans')
                 .upsert(planPayload, onConflict: 'user_id');
           } catch (_) {}
+
+          try {
+            final historyPayload = newTransaction.toPurchaseHistoryJson(
+              businessAccountId: businessAccountId,
+              planId: event.planId,
+              companyName: AppDatabase.instance.currentBusiness?.name,
+              billingCycle: event.billingCycle ??
+                  (duration.inDays == 365 ? 'yearly' : 'monthly'),
+              startDate: now,
+              endDate: now.add(duration),
+              purchaseType: 'new',
+            );
+            await client.from('purchase_history').insert(historyPayload);
+          } catch (e) {
+            log('Error inserting purchase_history: $e');
+          }
         }
       } catch (_) {}
 

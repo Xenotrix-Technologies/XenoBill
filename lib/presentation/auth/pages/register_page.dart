@@ -25,7 +25,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  int _currentStep = 0; // 0: Business Type, 1: Create Account, 2: Business Details, 3: App Config
+  int _currentStep =
+      0; // 0: Business Type, 1: Create Account, 2: Business Details, 3: App Config
   bool _isCheckingEmail = false;
   String? _emailErrorMessage;
 
@@ -54,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
   // Step 4 Controllers: App Config
   final _prefixController = TextEditingController(text: 'INV');
   final _startNumController = TextEditingController(text: '1001');
-  String _selectedCurrency = '₹';
+  // String _selectedCurrency = '₹';
   String _paperSize = '3 inch (80mm)';
 
   final List<BusinessType> _availableTypes = [
@@ -113,13 +114,15 @@ class _RegisterPageState extends State<RegisterPage> {
       if (isRegistered) {
         if (mounted) {
           setState(() {
-            _emailErrorMessage = 'Email is already registered. Please sign in or use a different email.';
+            _emailErrorMessage =
+                'Email is already registered. Please sign in or use a different email.';
           });
           _step1Key.currentState!.validate();
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Email address is already registered. Please sign in or use a different email.'),
+              content: Text(
+                  'Email address is already registered. Please sign in or use a different email.'),
               backgroundColor: AppColors.error,
               duration: Duration(seconds: 4),
             ),
@@ -248,7 +251,8 @@ class _RegisterPageState extends State<RegisterPage> {
           child: LinearProgressIndicator(
             value: progress,
             backgroundColor: const Color(0xFFE2E8F0),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.brightCyan),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(AppColors.brightCyan),
             minHeight: 4,
           ),
         ),
@@ -336,9 +340,13 @@ class _RegisterPageState extends State<RegisterPage> {
                               ? 'Saving & Launching...'
                               : (_isCheckingEmail
                                   ? 'Checking Email...'
-                                  : (_currentStep == 3 ? 'Register' : 'Next Step →')),
+                                  : (_currentStep == 3
+                                      ? 'Register'
+                                      : 'Next Step →')),
                           width: double.infinity,
-                          onPressed: (isLoading || _isCheckingEmail) ? null : _nextStep,
+                          onPressed: (isLoading || _isCheckingEmail)
+                              ? null
+                              : _nextStep,
                         ),
                       ),
                     ],
@@ -387,12 +395,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: BoxDecoration(
                       color: isCurrent
                           ? AppColors.brightCyan.withValues(alpha: 0.15)
-                          : (isDone ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9)),
+                          : (isDone
+                              ? const Color(0xFFECFDF5)
+                              : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isCurrent
                             ? AppColors.brightCyan
-                            : (isDone ? const Color(0xFF10B981) : const Color(0xFFE2E8F0)),
+                            : (isDone
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFE2E8F0)),
                         width: isCurrent ? 1.5 : 1.0,
                       ),
                     ),
@@ -400,13 +412,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (isDone)
-                          const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981))
+                          const Icon(Icons.check_circle_rounded,
+                              size: 14, color: Color(0xFF10B981))
                         else
                           Container(
                             width: 16,
                             height: 16,
                             decoration: BoxDecoration(
-                              color: isCurrent ? AppColors.brightCyan : const Color(0xFF94A3B8),
+                              color: isCurrent
+                                  ? AppColors.brightCyan
+                                  : const Color(0xFF94A3B8),
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
@@ -415,7 +430,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: isCurrent ? AppColors.deepNavy : Colors.white,
+                                color: isCurrent
+                                    ? AppColors.deepNavy
+                                    : Colors.white,
                               ),
                             ),
                           ),
@@ -425,10 +442,14 @@ class _RegisterPageState extends State<RegisterPage> {
                             steps[index],
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: isCurrent || isDone ? FontWeight.bold : FontWeight.w500,
+                              fontWeight: isCurrent || isDone
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
                               color: isCurrent
                                   ? AppColors.deepNavy
-                                  : (isDone ? const Color(0xFF065F46) : const Color(0xFF64748B)),
+                                  : (isDone
+                                      ? const Color(0xFF065F46)
+                                      : const Color(0xFF64748B)),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -440,7 +461,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 if (index < steps.length - 1)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2),
-                    child: Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF94A3B8)),
+                    child: Icon(Icons.chevron_right_rounded,
+                        size: 16, color: Color(0xFF94A3B8)),
                   ),
               ],
             ),
@@ -474,7 +496,8 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Select your business category first to customize your POS workspace',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          style:
+              AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
         ListView.separated(
@@ -495,7 +518,9 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.brightCyan.withValues(alpha: 0.08) : Colors.white,
+                  color: isSelected
+                      ? AppColors.brightCyan.withValues(alpha: 0.08)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected ? AppColors.brightCyan : AppColors.border,
@@ -514,12 +539,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.brightCyan : AppColors.lightGray,
+                        color: isSelected
+                            ? AppColors.brightCyan
+                            : AppColors.lightGray,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         type.icon,
-                        color: isSelected ? AppColors.deepNavy : AppColors.darkNavy,
+                        color: isSelected
+                            ? AppColors.deepNavy
+                            : AppColors.darkNavy,
                         size: 24,
                       ),
                     ),
@@ -532,14 +561,18 @@ class _RegisterPageState extends State<RegisterPage> {
                             type.displayName,
                             style: AppTextStyles.bodyLarge.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? AppColors.deepNavy : AppColors.nearBlack,
+                              color: isSelected
+                                  ? AppColors.deepNavy
+                                  : AppColors.nearBlack,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             type.description,
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: isSelected ? AppColors.deepNavy.withValues(alpha: 0.8) : AppColors.textSecondary,
+                              color: isSelected
+                                  ? AppColors.deepNavy.withValues(alpha: 0.8)
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -579,7 +612,8 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Enter your details to register your Xenobiz owner account',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
@@ -587,7 +621,8 @@ class _RegisterPageState extends State<RegisterPage> {
             hint: 'e.g. Ramesh Kumar',
             prefixIcon: Icons.person_outline,
             controller: _nameController,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Full name is required' : null,
+            validator: (v) =>
+                v == null || v.trim().isEmpty ? 'Full name is required' : null,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -596,7 +631,9 @@ class _RegisterPageState extends State<RegisterPage> {
             keyboardType: TextInputType.phone,
             prefixIcon: Icons.phone_android_outlined,
             controller: _phoneController,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Phone number is required' : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? 'Phone number is required'
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -611,8 +648,10 @@ class _RegisterPageState extends State<RegisterPage> {
               }
             },
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Email address is required';
-              if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email address';
+              if (v == null || v.trim().isEmpty)
+                return 'Email address is required';
+              if (!v.contains('@') || !v.contains('.'))
+                return 'Enter a valid email address';
               if (_emailErrorMessage != null) return _emailErrorMessage;
               return null;
             },
@@ -624,7 +663,9 @@ class _RegisterPageState extends State<RegisterPage> {
             obscureText: true,
             prefixIcon: Icons.lock_outline,
             controller: _passwordController,
-            validator: (v) => v == null || v.length < 6 ? 'Password must be at least 6 characters' : null,
+            validator: (v) => v == null || v.length < 6
+                ? 'Password must be at least 6 characters'
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -633,7 +674,8 @@ class _RegisterPageState extends State<RegisterPage> {
             obscureText: true,
             prefixIcon: Icons.lock_outline,
             controller: _confirmPasswordController,
-            validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null,
+            validator: (v) =>
+                v != _passwordController.text ? 'Passwords do not match' : null,
           ),
         ],
       ),
@@ -651,7 +693,8 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Configure your shop profile for invoices and customer receipts',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           Container(
@@ -659,15 +702,20 @@ class _RegisterPageState extends State<RegisterPage> {
             decoration: BoxDecoration(
               color: AppColors.brightCyan.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.brightCyan.withValues(alpha: 0.4)),
+              border: Border.all(
+                  color: AppColors.brightCyan.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.storefront_outlined, color: AppColors.darkNavy, size: 20),
+                const Icon(Icons.storefront_outlined,
+                    color: AppColors.darkNavy, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Selected Category: ${_selectedType.displayName}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkNavy, fontSize: 13),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkNavy,
+                      fontSize: 13),
                 ),
               ],
             ),
@@ -679,7 +727,9 @@ class _RegisterPageState extends State<RegisterPage> {
             hint: 'e.g. Apex Retail, Spark Salon',
             prefixIcon: Icons.business_outlined,
             controller: _bizNameController,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Business name is required' : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? 'Business name is required'
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -697,7 +747,9 @@ class _RegisterPageState extends State<RegisterPage> {
             hint: 'e.g. Shop 12, Main Market Road',
             prefixIcon: Icons.location_on_outlined,
             controller: _addressLine1Controller,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Address Line 1 is required' : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? 'Address Line 1 is required'
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -717,8 +769,12 @@ class _RegisterPageState extends State<RegisterPage> {
               border: Border.all(color: AppColors.border),
             ),
             child: SwitchListTile(
-              title: const Text('GST Registered Business', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: const Text('Enable GST tax calculation & GSTIN printing', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              title: const Text('GST Registered Business',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text(
+                  'Enable GST tax calculation & GSTIN printing',
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               value: _gstEnabled,
               activeThumbColor: AppColors.brightCyan,
               onChanged: (val) => setState(() => _gstEnabled = val),
@@ -750,7 +806,8 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Review your shop details and customize invoice sequence and thermal printing',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          style:
+              AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
 
@@ -774,19 +831,33 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
+                  Icon(Icons.check_circle_rounded,
+                      color: Color(0xFF10B981), size: 22),
                   SizedBox(width: 8),
-                  Text('Ready to Launch Shop!', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+                  Text('Ready to Launch Shop!',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNavy)),
                 ],
               ),
               const SizedBox(height: 10),
               const Divider(height: 1),
               const SizedBox(height: 10),
               _buildSummaryRow('Category', _selectedType.displayName),
-              _buildSummaryRow('Owner', _nameController.text.isEmpty ? 'Shop Owner' : _nameController.text),
+              _buildSummaryRow(
+                  'Owner',
+                  _nameController.text.isEmpty
+                      ? 'Shop Owner'
+                      : _nameController.text),
               _buildSummaryRow('Email', _emailController.text),
-              _buildSummaryRow('Business Name', _bizNameController.text.isEmpty ? 'My Shop' : _bizNameController.text),
-              _buildSummaryRow('Invoice Format', '${_prefixController.text.toUpperCase()}-${_startNumController.text}'),
+              _buildSummaryRow(
+                  'Business Name',
+                  _bizNameController.text.isEmpty
+                      ? 'My Shop'
+                      : _bizNameController.text),
+              _buildSummaryRow('Invoice Format',
+                  '${_prefixController.text.toUpperCase()}-${_startNumController.text}'),
             ],
           ),
         ),
@@ -818,7 +889,11 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(height: AppSpacing.lg),
 
         // 3. NEXT CARD: Thermal Printer Paper Format
-        const Text('Receipt Printing Size', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.darkNavy)),
+        const Text('Receipt Printing Size',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.5,
+                color: AppColors.darkNavy)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(4),
@@ -830,7 +905,9 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             children: paperSizes.map((size) {
               return RadioListTile<String>(
-                title: Text(size, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                title: Text(size,
+                    style: const TextStyle(
+                        fontSize: 13.5, fontWeight: FontWeight.w600)),
                 value: size,
                 groupValue: _paperSize,
                 activeColor: AppColors.brightCyan,
@@ -852,8 +929,13 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
-          Text(value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkNavy)),
+          Text(label,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkNavy)),
         ],
       ),
     );
