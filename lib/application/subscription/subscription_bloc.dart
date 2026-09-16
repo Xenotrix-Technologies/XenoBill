@@ -126,9 +126,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     if (state is SubscriptionLoaded) {
       final current = (state as SubscriptionLoaded);
       final now = DateTime.now();
-      final isYearly = event.planName.toLowerCase().contains('yearly');
-      final duration =
-          isYearly ? const Duration(days: 365) : const Duration(days: 30);
+      final nameLower = event.planName.toLowerCase();
+      final cycleLower = event.billingCycle?.toLowerCase() ?? '';
+      Duration duration = const Duration(days: 30);
+      if (nameLower.contains('3 year') || nameLower.contains('3year') || cycleLower.contains('3 year')) {
+        duration = const Duration(days: 365 * 3);
+      } else if (nameLower.contains('yearly') || nameLower.contains('year') || cycleLower.contains('year')) {
+        duration = const Duration(days: 365);
+      } else if (nameLower.contains('6 month') || nameLower.contains('6month') || cycleLower.contains('6 month')) {
+        duration = const Duration(days: 180);
+      } else if (nameLower.contains('3 month') || nameLower.contains('3month') || cycleLower.contains('3 month')) {
+        duration = const Duration(days: 90);
+      } else {
+        duration = const Duration(days: 30);
+      }
 
       final isPlanUuid = event.planId != null &&
           RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')

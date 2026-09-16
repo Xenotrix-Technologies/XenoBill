@@ -21,6 +21,9 @@ class SubscriptionOffer {
   final String planId;
   final double offerPrice;
   final String currency;
+  final int durationMonths;
+  final String eligibilityType;
+  final int inactiveDays;
   final bool isActive;
 
   const SubscriptionOffer({
@@ -30,6 +33,9 @@ class SubscriptionOffer {
     required this.planId,
     required this.offerPrice,
     this.currency = 'INR',
+    this.durationMonths = 1,
+    this.eligibilityType = 'new_or_inactive',
+    this.inactiveDays = 180,
     this.isActive = true,
   });
 
@@ -41,6 +47,9 @@ class SubscriptionOffer {
       planId: json['plan_id']?.toString() ?? '',
       offerPrice: ((json['offer_price'] ?? json['price'] ?? 199.0) as num).toDouble(),
       currency: json['currency']?.toString() ?? 'INR',
+      durationMonths: (json['duration_months'] as num?)?.toInt() ?? 1,
+      eligibilityType: json['eligibility_type']?.toString() ?? 'new_or_inactive',
+      inactiveDays: (json['inactive_days'] as num?)?.toInt() ?? 180,
       isActive: json['is_active'] != false,
     );
   }
@@ -346,20 +355,25 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           final planId = planMap['id']?.toString() ?? '';
 
           SubscriptionOffer? matchedOffer;
-          try {
-            matchedOffer = offers.firstWhere(
-              (off) => off.planId == planId ||
-                  off.offerName.toLowerCase().contains(planMap['plan_name']?.toString().toLowerCase() ?? '') ||
-                  planMap['plan_name']?.toString().toLowerCase().contains('monthly') == true,
-            );
-          } catch (_) {
-            if (planMap['billing_cycle']?.toString().toLowerCase().contains('month') == true ||
-                planMap['plan_name']?.toString().toLowerCase().contains('monthly') == true) {
+          final planNameLower = (planMap['plan_name']?.toString() ?? planMap['name']?.toString() ?? '').toLowerCase();
+          final bool isOneMonthPlan = planId == 'plan_monthly' ||
+              planNameLower == 'xenobill monthly' ||
+              (planNameLower.contains('monthly') && !planNameLower.contains('3') && !planNameLower.contains('6') && !planNameLower.contains('12'));
+
+          if (isOneMonthPlan) {
+            try {
+              matchedOffer = offers.firstWhere(
+                (off) => off.planId == planId ||
+                    off.planId == 'plan_monthly' ||
+                    off.offerName.toLowerCase().contains('monthly') ||
+                    off.offerPrice == 199.0,
+              );
+            } catch (_) {
               matchedOffer = const SubscriptionOffer(
                 id: 'offer_first_month',
                 offerName: 'Special Offer',
                 description: '₹199 for your 1st month, then ₹399/month thereafter',
-                planId: '',
+                planId: 'plan_monthly',
                 offerPrice: 199.0,
               );
             }
@@ -760,6 +774,42 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
+  /// Evaluates whether a user is eligible for a welcome/reactivation introductory offer based on database rules:
+  /// - New users (no prior paid plan) -> ELIGIBLE
+  /// - Currently active paid users -> NOT ELIGIBLE
+  /// - Formerly paid users inactive for 180+ days -> ELIGIBLE
+  bool _isUserEligibleForOffer(
+    SubscriptionDetails details,
+    List<SubscriptionTransaction> transactions,
+    SubscriptionOffer? offer,
+  ) {
+    if (offer == null || !offer.isActive) return false;
+
+    // Active paid users are not eligible for intro/welcome/reactivation offers
+    if (details.status == SubscriptionStatus.subscriptionActive) {
+      return false;
+    }
+
+    DateTime? lastPaidDate = details.subscriptionEndDate ?? details.subscriptionStartDate;
+    if (transactions.isNotEmpty) {
+      for (final tx in transactions) {
+        if (lastPaidDate == null || tx.date.isAfter(lastPaidDate)) {
+          lastPaidDate = tx.date;
+        }
+      }
+    }
+
+    // Brand new user with no previous purchases
+    if (lastPaidDate == null && details.subscriptionStartDate == null) {
+      return true;
+    }
+
+    // Inactive user check (default 180 days)
+    final requiredDays = offer.inactiveDays > 0 ? offer.inactiveDays : 180;
+    final daysInactive = DateTime.now().difference(lastPaidDate!).inDays;
+    return daysInactive >= requiredDays;
+  }
+
   Widget _buildPlansSection(
     BuildContext context,
     SubscriptionDetails details,
@@ -768,10 +818,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     if (_isLoadingPlans) {
       return const SubscriptionSkeletonLoader();
     }
-
-    // A user has purchased a plan ONLY if status is subscriptionActive AND subscriptionStartDate is set
-    final bool hasPurchasedPlan = details.status == SubscriptionStatus.subscriptionActive &&
-        details.subscriptionStartDate != null;
 
     final currentPlan = details.planName;
     final activePlans = (_fetchedPlans.isNotEmpty ? _fetchedPlans : _defaultPlans)
@@ -782,6 +828,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       children: [
         ...activePlans.map((plan) {
           final isCurrent = currentPlan.toLowerCase().replaceAll(' ', '') == plan.planName.toLowerCase().replaceAll(' ', '');
+          final bool isOfferEligible = _isUserEligibleForOffer(details, transactions, plan.activeOffer);
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 14.0),
@@ -789,8 +836,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               context: context,
               plan: plan,
               isCurrent: isCurrent,
-              hasPurchasedPlan: hasPurchasedPlan,
-              onSelect: () => _handlePlanSelection(context, plan, hasPurchasedPlan: hasPurchasedPlan),
+              isOfferEligible: isOfferEligible,
+              onSelect: () => _handlePlanSelection(context, plan, isOfferEligible: isOfferEligible),
             ),
           );
         }),
@@ -803,18 +850,20 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     required BuildContext context,
     required SubscriptionPlan plan,
     bool isCurrent = false,
-    bool hasPurchasedPlan = false,
+    bool isOfferEligible = false,
     VoidCallback? onSelect,
   }) {
     final isRecommended = plan.isRecommended;
-    final bool showOffer = !hasPurchasedPlan && plan.billingCycle == 'monthly';
+    final bool showOffer = isOfferEligible && plan.activeOffer != null && plan.activeOffer!.isActive;
 
-    final finalPriceVal = showOffer ? 199.0 : plan.price;
-    final double? strikethroughPriceVal = showOffer ? plan.price : null;
+    final finalPriceVal = showOffer ? plan.activeOffer!.offerPrice : plan.price;
+    final double? strikethroughPriceVal = showOffer ? plan.price : plan.originalPrice;
 
     final periodText = plan.billingCycle == 'yearly'
         ? '/ year ${plan.discountTag != null ? '(${plan.discountTag})' : ''}'
-        : '/ month';
+        : (plan.planName.toLowerCase().contains('3 month')
+            ? '/ 3 months'
+            : (plan.planName.toLowerCase().contains('6 month') ? '/ 6 months' : '/ month'));
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -891,14 +940,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.local_offer_rounded, color: Color(0xFFD97706), size: 18),
-                  SizedBox(width: 8),
+                  const Icon(Icons.local_offer_rounded, color: Color(0xFFD97706), size: 18),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Special Offer – ₹199 for your 1st month, then ₹399/month thereafter.',
-                      style: TextStyle(
+                      plan.activeOffer?.description.isNotEmpty == true
+                          ? '${plan.activeOffer!.offerName} – ${plan.activeOffer!.description}'
+                          : 'Special Offer – ₹199 for your 1st month, then ₹399/month thereafter.',
+                      style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF92400E),
@@ -1094,9 +1145,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   Future<void> _handlePlanSelection(
     BuildContext context,
     SubscriptionPlan plan, {
-    bool hasPurchasedPlan = false,
+    bool isOfferEligible = false,
   }) async {
-    final finalPriceToCharge = (!hasPurchasedPlan && plan.billingCycle == 'monthly') ? 199.0 : plan.finalPrice;
+    final bool showOffer = isOfferEligible && plan.activeOffer != null && plan.activeOffer!.isActive;
+    final finalPriceToCharge = showOffer ? plan.activeOffer!.offerPrice : plan.price;
 
     final hasInternet = await _checkInternet();
     if (!hasInternet) {
